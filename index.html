@@ -622,7 +622,7 @@
       happyPhase: 0,
       greeting: false,
       greetCooldown: 0,
-      role: 'dog'
+      role: 'cerberus'
     };
 
     function getCompanionRoleByScore(pts) {
@@ -630,10 +630,10 @@
       if (pts >= 600) return 'genie';
       if (pts >= 500) return 'musk';
       if (pts >= 400) return 'cyber_guard';
-      if (pts >= 300) return 'minotaur';
+      if (pts >= 300) return 'achilles';
       if (pts >= 200) return 'durov';
-      if (pts >= 100) return 'sheikh';
-      return 'dog';
+      if (pts >= 100) return 'minotaur';
+      return 'cerberus';
     }
 
     function setCompanionRole(newRole, announce = true) {
@@ -645,10 +645,10 @@
       addParticles(streetCompanion.x, groundY - 32, 18, ['#ffd166', '#ffffff', '#90e0ef', '#f77f00'], [45, 130]);
       if (announce) {
         const announcements = {
-          dog: ['ГОНЧАЯ ОЛИМПА', '#ffe066', -62],
-          sheikh: ['100 🍌 · ГЕРМЕС', '#ffd166', -80],
+          cerberus: ['ЦЕРБЕР ОЛИМПА', '#ffe066', -62],
+          minotaur: ['100 🍌 · МИНОТАВР В ОЧКАХ', '#ffd166', -84],
           durov: ['200 🍌 · ПАВЕЛ ДУРОВ', '#90e0ef', -84],
-          minotaur: ['300 🍌 · МИНОТАВР В ОЧКАХ', '#ffd166', -86],
+          achilles: ['300 🍌 · АХИЛЛЕС', '#ffd166', -86],
           cyber_guard: ['400 🍌 · СТРАЖ ГЕФЕСТА', '#4cc9f0', -86],
           musk: ['500 🍌 · ИЛОН МАСК', '#ff9e00', -84],
           genie: ['600 🍌 · ЗОЛОТОЙ ТИТАН', '#ffd166', -92],
@@ -763,7 +763,7 @@
 
       streetCompanion.greetCooldown = 0;
       streetCompanion.greeting = false;
-      setCompanionRole('dog', false);
+      setCompanionRole('cerberus', false);
 
       obstacles = [];
       bananas = [];
@@ -1043,12 +1043,15 @@
           streetCompanion.greetCooldown = 3.4;
           const groundY = height - groundHeight;
           const r = streetCompanion.role;
-          if (r === 'dog') {
+          if (r === 'cerberus') {
             playBarkSound();
-            addFloatingText(streetCompanion.x, groundY - 56, '🐾', '#ffe066');
+            addFloatingText(streetCompanion.x, groundY - 58, '🔥🐾', '#ff9e00');
           } else if (r === 'minotaur') {
             playGreetChime();
             addFloatingText(streetCompanion.x, groundY - 78, '🐂', '#ffd166');
+          } else if (r === 'achilles') {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 82, '⚔️', '#ffd166');
           } else if (r === 'cyber_guard') {
             playGreetChime();
             addFloatingText(streetCompanion.x, groundY - 82, '⚡', '#4cc9f0');
@@ -1063,7 +1066,7 @@
             addFloatingText(streetCompanion.x, groundY - 92, '👑', '#ffe066');
           } else {
             playGreetChime();
-            addFloatingText(streetCompanion.x, groundY - 76, '👋', '#ffd166');
+            addFloatingText(streetCompanion.x, groundY - 76, '👋', '#90e0ef');
           }
         }
       } else {
@@ -1071,8 +1074,8 @@
         streetCompanion.happyPhase = 0;
         const leftBound = Math.max(70, width * 0.26);
         const rightBound = Math.max(leftBound + 90, width - 70);
-        const speed = streetCompanion.role === 'dog' ? 64 : (streetCompanion.role === 'minotaur' ? 40 : 44);
-        const freq = streetCompanion.role === 'dog' ? 14 : (streetCompanion.role === 'minotaur' ? 8 : 8.5);
+        const speed = streetCompanion.role === 'cerberus' ? 62 : (streetCompanion.role === 'minotaur' ? 40 : 44);
+        const freq = streetCompanion.role === 'cerberus' ? 13 : (streetCompanion.role === 'minotaur' ? 8 : 8.5);
 
         streetCompanion.x += streetCompanion.dir * speed * dt;
         streetCompanion.movePhase += dt * freq;
@@ -1545,8 +1548,8 @@
     }
 
     // --- Спутники на мраморной тропе Олимпа ---
-    // 1) Гончий уиппет в красной тунике (0..99)
-    function drawWhippetDog() {
+    // 1) Трёхглавый уиппет-Цербер в красной кофточке (0..99)
+    function drawCerberus() {
       const groundY = height - groundHeight;
       const isGreeting = streetCompanion.greeting;
       const bounce = isGreeting
@@ -1565,11 +1568,13 @@
       ctx.translate(streetCompanion.x, groundY + bounce);
       ctx.scale(streetCompanion.dir, 1);
 
+      // Тень под лапами
       ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
       ctx.beginPath();
-      ctx.ellipse(0, 2 - bounce, 18, 4, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 2 - bounce, 19, 4, 0, 0, Math.PI * 2);
       ctx.fill();
 
+      // Тонкий изогнутый хвост уиппета
       ctx.save();
       ctx.translate(-15, -16);
       ctx.rotate(tailWag);
@@ -1582,6 +1587,7 @@
       ctx.stroke();
       ctx.restore();
 
+      // Дальние лапы (чуть темнее для объёма)
       ctx.strokeStyle = '#b8b4ae';
       ctx.lineWidth = 2.8;
       ctx.lineCap = 'round';
@@ -1592,6 +1598,7 @@
       ctx.lineTo(10 + legSwing * 0.8, -1);
       ctx.stroke();
 
+      // Поджарый силуэт тела уиппета в терракотово-красной флисовой кофте
       ctx.fillStyle = '#9e2a1c';
       ctx.strokeStyle = '#6e190f';
       ctx.lineWidth = 1.4;
@@ -1604,12 +1611,14 @@
       ctx.fill();
       ctx.stroke();
 
-      ctx.strokeStyle = '#ffd166';
+      // Текстурный шов рукава на кофте
+      ctx.strokeStyle = '#7c1d12';
       ctx.lineWidth = 1.2;
       ctx.beginPath();
       ctx.arc(8, -15, 4.5, -0.4, 1.9);
       ctx.stroke();
 
+      // Ближние стройные лапы
       ctx.strokeStyle = '#e5e2dc';
       ctx.lineWidth = 3;
       ctx.beginPath();
@@ -1626,374 +1635,108 @@
       }
       ctx.stroke();
 
+      // Широкий высокий воротник-стойка (под три шеи)
       ctx.fillStyle = '#a83020';
       ctx.strokeStyle = '#731b10';
       ctx.lineWidth = 1.4;
       ctx.beginPath();
-      ctx.moveTo(5, -18);
-      ctx.lineTo(8, -32);
-      ctx.lineTo(19, -30);
-      ctx.lineTo(15, -14);
+      ctx.moveTo(4, -18);
+      ctx.lineTo(6, -32);
+      ctx.lineTo(20, -30);
+      ctx.lineTo(16, -14);
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
-      ctx.strokeStyle = '#ffd166';
+      // Верхняя тонкая кайма воротника
+      ctx.strokeStyle = '#c84b36';
       ctx.lineWidth = 1.6;
       ctx.beginPath();
-      ctx.moveTo(8, -32);
-      ctx.lineTo(19, -30);
+      ctx.moveTo(6, -32);
+      ctx.lineTo(20, -30);
       ctx.stroke();
 
-      ctx.save();
-      ctx.translate(14, -33);
-      if (isGreeting) {
-        ctx.rotate(-0.22);
-      }
+      // Вспомогательная функция отрисовки головы уиппета (как с обложки DOGUE)
+      const drawWhippetHead = (hx, hy, tilt, scale, coatTone, earTone) => {
+        ctx.save();
+        ctx.translate(hx, hy);
+        ctx.rotate(tilt + (isGreeting ? -0.2 : 0));
+        ctx.scale(scale, scale);
 
-      ctx.fillStyle = '#dcdad5';
-      ctx.beginPath();
-      ctx.moveTo(-5, 4);
-      ctx.lineTo(-3, -4);
-      ctx.lineTo(5, -3);
-      ctx.lineTo(3, 4);
-      ctx.closePath();
-      ctx.fill();
+        // Шея, выглядывающая из воротника
+        ctx.fillStyle = '#dcdad5';
+        ctx.beginPath();
+        ctx.moveTo(-4, 5);
+        ctx.lineTo(-2.5, -4);
+        ctx.lineTo(4.5, -3);
+        ctx.lineTo(3, 5);
+        ctx.closePath();
+        ctx.fill();
 
-      ctx.fillStyle = '#eceae6';
-      ctx.strokeStyle = '#9e9b95';
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.moveTo(-4, -5);
-      ctx.quadraticCurveTo(2, -8, 8, -5);
-      ctx.lineTo(20, -2.5);
-      ctx.quadraticCurveTo(22, -1, 20, 1.5);
-      ctx.lineTo(7, 2.5);
-      ctx.quadraticCurveTo(1, 3, -4, 0);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.strokeStyle = '#2b2927';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(11, 1.2);
-      ctx.lineTo(19.5, 0.8);
-      ctx.stroke();
-
-      ctx.fillStyle = '#1f1e1d';
-      ctx.beginPath();
-      ctx.arc(20.6, -1.2, 1.8, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#5c3a21';
-      ctx.beginPath();
-      ctx.arc(7.5, -3.2, 1.9, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(8, -3.7, 0.65, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#8b8a88';
-      ctx.strokeStyle = '#5e5d5b';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(1, -5.5);
-      ctx.quadraticCurveTo(-5, -7, -7, 0.5);
-      ctx.quadraticCurveTo(-4, 1.5, -1, -2.5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.restore();
-      ctx.restore();
-    }
-
-    // 2) Посланник Олимпа (100..199)
-    function drawSheikh() {
-      const groundY = height - groundHeight;
-      const isGreeting = streetCompanion.greeting;
-      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
-      const step = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 4.5;
-
-      ctx.save();
-      ctx.translate(streetCompanion.x, groundY + bob);
-      ctx.scale(streetCompanion.dir, 1);
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-      ctx.beginPath();
-      ctx.ellipse(0, 2 - bob, 16, 4, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#5c3a21';
-      ctx.beginPath();
-      ctx.roundRect(-7 - step, -3.5, 7, 3.5, 1.5);
-      ctx.roundRect(1 + step, -3.5, 7, 3.5, 1.5);
-      ctx.fill();
-
-      ctx.fillStyle = '#f8fafc';
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.moveTo(-9, -40);
-      ctx.lineTo(9, -40);
-      ctx.lineTo(13, -3);
-      ctx.lineTo(-13, -3);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.strokeStyle = '#ffd166';
-      ctx.lineWidth = 1.6;
-      ctx.beginPath();
-      ctx.moveTo(-10, -24);
-      ctx.lineTo(10, -24);
-      ctx.stroke();
-
-      ctx.strokeStyle = '#f8fafc';
-      ctx.lineWidth = 5.5;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      if (isGreeting) {
-        const waveAngle = -2.25 + Math.sin(streetCompanion.happyPhase) * 0.35;
-        const handX = 6 + Math.cos(waveAngle) * 14;
-        const handY = -34 + Math.sin(waveAngle) * 14;
-        ctx.moveTo(6, -34);
-        ctx.lineTo(handX, handY);
+        // Череп и длинная узкая морда
+        ctx.fillStyle = coatTone;
+        ctx.strokeStyle = '#9e9b95';
+        ctx.lineWidth = 1.1;
+        ctx.beginPath();
+        ctx.moveTo(-4, -5);
+        ctx.quadraticCurveTo(2, -8, 8, -5);
+        ctx.lineTo(20, -2.5);
+        ctx.quadraticCurveTo(22, -1, 20, 1.5);
+        ctx.lineTo(7, 2.5);
+        ctx.quadraticCurveTo(1, 3, -4, 0);
+        ctx.closePath();
+        ctx.fill();
         ctx.stroke();
 
-        ctx.fillStyle = '#d99b66';
+        // Тёмная линия губ
+        ctx.strokeStyle = '#2b2927';
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
-        ctx.arc(handX, handY, 3.3, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        ctx.moveTo(4, -35);
-        ctx.lineTo(4 - step * 0.8, -20);
+        ctx.moveTo(11, 1.2);
+        ctx.lineTo(19.5, 0.8);
         ctx.stroke();
 
-        ctx.fillStyle = '#d99b66';
+        // Чёрный носик на самом кончике
+        ctx.fillStyle = '#1f1e1d';
         ctx.beginPath();
-        ctx.arc(4 - step * 0.8, -19.5, 2.8, 0, Math.PI * 2);
+        ctx.arc(20.6, -1.2, 1.8, 0, Math.PI * 2);
         ctx.fill();
-      }
 
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 1.4;
-      ctx.beginPath();
-      ctx.moveTo(-6, -54);
-      ctx.quadraticCurveTo(-15, -44, -14, -27);
-      ctx.lineTo(-5, -29);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
+        // Тёплый карий глаз с бликом
+        ctx.fillStyle = '#5c3a21';
+        ctx.beginPath();
+        ctx.arc(7.5, -3.2, 1.9, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(8, -3.7, 0.65, 0, Math.PI * 2);
+        ctx.fill();
 
-      ctx.fillStyle = '#d99b66';
-      ctx.beginPath();
-      ctx.arc(1, -47, 8.2, 0, Math.PI * 2);
-      ctx.fill();
+        // Фирменное заложенное назад серо-дымчатое ушко уиппета
+        ctx.fillStyle = earTone;
+        ctx.strokeStyle = '#5e5d5b';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(1, -5.5);
+        ctx.quadraticCurveTo(-5, -7, -7, 0.5);
+        ctx.quadraticCurveTo(-4, 1.5, -1, -2.5);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
 
-      ctx.fillStyle = '#18181b';
-      ctx.beginPath();
-      ctx.arc(1.5, -45.5, 8.2, 0.05, Math.PI * 0.92);
-      ctx.lineTo(-3, -44);
-      ctx.quadraticCurveTo(3, -41.5, 8.8, -44.2);
-      ctx.closePath();
-      ctx.fill();
+        ctx.restore();
+      };
 
-      ctx.fillStyle = '#18181b';
-      ctx.fillRect(2.5, -44.8, 6.2, 1.8);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(4, -42.6, 3.6, 1.2);
-
-      ctx.fillStyle = '#111827';
-      ctx.beginPath();
-      ctx.arc(5, -48.5, 1.4, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#cbd5e1';
-      ctx.lineWidth = 1.3;
-      ctx.beginPath();
-      ctx.arc(0.5, -49.5, 9.2, Math.PI * 0.95, Math.PI * 2.04);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#111111';
-      ctx.strokeStyle = '#eab308';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(-8.8, -53.2, 18.6, 3.8, 1.8);
-      ctx.fill();
-      ctx.stroke();
+      // Три головы уиппета, выглядывающие из красного воротника
+      const headBob = Math.sin(elapsed * 8.5) * 0.05;
+      drawWhippetHead(11, -37, -0.25 + headBob, 0.84, '#dedcd7', '#7b7a78'); // верхняя дальняя
+      drawWhippetHead(15, -33, -0.04 - headBob, 0.98, '#eceae6', '#8b8a88'); // центральная основная
+      drawWhippetHead(17, -28, 0.16 + headBob, 0.86, '#e3e1dc', '#82817f');  // передняя нижняя
 
       ctx.restore();
     }
 
-    // 3) Павел Дуров (200..299)
-    function drawDurov() {
-      const groundY = height - groundHeight;
-      const isGreeting = streetCompanion.greeting;
-      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
-      const stepSwing = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 6;
-
-      ctx.save();
-      ctx.translate(streetCompanion.x, groundY + bob);
-      ctx.scale(streetCompanion.dir, 1);
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
-      ctx.beginPath();
-      ctx.ellipse(0, 2 - bob, 16, 4.2, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.strokeStyle = '#11141c';
-      ctx.lineWidth = 4.6;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      ctx.moveTo(-3.2, -24);
-      ctx.lineTo(-4 + stepSwing, -3.5);
-      ctx.moveTo(3.2, -24);
-      ctx.lineTo(4 - stepSwing, -3.5);
-      ctx.stroke();
-
-      ctx.fillStyle = '#090b10';
-      ctx.beginPath();
-      ctx.roundRect(-6.5 + stepSwing, -4.5, 8.5, 4, 2);
-      ctx.roundRect(1.5 - stepSwing, -4.5, 8.5, 4, 2);
-      ctx.fill();
-
-      const shirtGrad = ctx.createLinearGradient(-10, -45, 10, -22);
-      shirtGrad.addColorStop(0, '#1e2330');
-      shirtGrad.addColorStop(0.55, '#11141c');
-      shirtGrad.addColorStop(1, '#080a0f');
-      ctx.fillStyle = shirtGrad;
-      ctx.strokeStyle = '#2a3140';
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.moveTo(-10.5, -45);
-      ctx.lineTo(10.5, -45);
-      ctx.lineTo(7, -23);
-      ctx.lineTo(-7, -23);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = '#161a24';
-      ctx.beginPath();
-      ctx.roundRect(4.5, -45, 6.5, 7.5, 3);
-      ctx.fill();
-
-      ctx.strokeStyle = '#eab892';
-      ctx.lineWidth = 4;
-      ctx.lineCap = 'round';
-      ctx.beginPath();
-      if (isGreeting) {
-        const waveAngle = -2.28 + Math.sin(streetCompanion.happyPhase) * 0.36;
-        const elbowX = 8.5 + Math.cos(waveAngle + 0.35) * 8;
-        const elbowY = -39 + Math.sin(waveAngle + 0.35) * 8;
-        const handX = elbowX + Math.cos(waveAngle - 0.15) * 9;
-        const handY = elbowY + Math.sin(waveAngle - 0.15) * 9;
-        ctx.moveTo(8, -40);
-        ctx.lineTo(elbowX, elbowY);
-        ctx.lineTo(handX, handY);
-        ctx.stroke();
-
-        ctx.fillStyle = '#eab892';
-        ctx.beginPath();
-        ctx.arc(handX, handY, 3, 0, Math.PI * 2);
-        ctx.fill();
-      } else {
-        const armSwing = stepSwing * 0.75;
-        ctx.moveTo(7.5, -40);
-        ctx.lineTo(8 - armSwing * 0.5, -31);
-        ctx.lineTo(9 - armSwing, -22.5);
-        ctx.stroke();
-
-        ctx.fillStyle = '#eab892';
-        ctx.beginPath();
-        ctx.arc(9 - armSwing, -22, 2.5, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      ctx.fillStyle = '#dfa980';
-      ctx.fillRect(-3.2, -48.5, 6.4, 4.5);
-
-      ctx.fillStyle = '#eab892';
-      ctx.strokeStyle = '#c58f68';
-      ctx.lineWidth = 0.9;
-      ctx.beginPath();
-      ctx.moveTo(-6.2, -56);
-      ctx.quadraticCurveTo(-6.6, -49.5, -2.8, -47.2);
-      ctx.lineTo(3.6, -47);
-      ctx.quadraticCurveTo(7.2, -49, 6.8, -55.5);
-      ctx.quadraticCurveTo(5.2, -61.8, -0.8, -61.8);
-      ctx.quadraticCurveTo(-6.2, -61.2, -6.2, -56);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = 'rgba(55, 44, 38, 0.2)';
-      ctx.beginPath();
-      ctx.moveTo(-2.5, -50.2);
-      ctx.lineTo(5.8, -50.2);
-      ctx.lineTo(3.8, -47.2);
-      ctx.lineTo(-2.6, -47.4);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.strokeStyle = '#8c5a44';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(1.8, -49.5);
-      ctx.lineTo(5.6, -49.5);
-      ctx.stroke();
-
-      ctx.strokeStyle = '#c58b63';
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(5.4, -55);
-      ctx.lineTo(7, -51.6);
-      ctx.lineTo(5.2, -51.2);
-      ctx.stroke();
-
-      ctx.fillStyle = '#1b191e';
-      ctx.beginPath();
-      ctx.moveTo(-6.8, -53.5);
-      ctx.quadraticCurveTo(-7.6, -60.5, -2.5, -63);
-      ctx.quadraticCurveTo(3.8, -64.2, 7.2, -59.8);
-      ctx.quadraticCurveTo(4.5, -58.2, 0.2, -59);
-      ctx.quadraticCurveTo(-3.6, -59.2, -4.4, -53);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#07090d';
-      ctx.strokeStyle = '#333b4d';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.roundRect(0.2, -56.8, 7.6, 3.8, 1.2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.strokeStyle = '#141821';
-      ctx.lineWidth = 1.3;
-      ctx.beginPath();
-      ctx.moveTo(-4.2, -54.8);
-      ctx.lineTo(0.4, -55.2);
-      ctx.stroke();
-
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
-      ctx.lineWidth = 1;
-      ctx.beginPath();
-      ctx.moveTo(1.8, -56.2);
-      ctx.lineTo(3.6, -53.8);
-      ctx.stroke();
-
-      ctx.restore();
-    }
-
-    // 4) Минотавр в солнцезащитных очках (300..399)
+    // 2) Минотавр в солнцезащитных очках (100..199)
     function drawMinotaur() {
       const groundY = height - groundHeight;
       const isGreeting = streetCompanion.greeting;
@@ -2087,6 +1830,299 @@
       ctx.lineWidth = 1.1;
       ctx.beginPath();
       ctx.roundRect(1, -60, 11, 4.5, 1.5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 3) Павел Дуров (200..299)
+    function drawDurov() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
+      const stepSwing = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 6;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      // Тень
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 16, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Чёрные брюки и обувь
+      ctx.strokeStyle = '#12151c';
+      ctx.lineWidth = 4.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-3.2, -23);
+      ctx.lineTo(-4 + stepSwing, -3);
+      ctx.moveTo(3.2, -23);
+      ctx.lineTo(4 - stepSwing, -3);
+      ctx.stroke();
+
+      ctx.fillStyle = '#090b0f';
+      ctx.beginPath();
+      ctx.roundRect(-6.5 + stepSwing, -4.5, 8, 3.8, 2);
+      ctx.roundRect(1.5 - stepSwing, -4.5, 8, 3.8, 2);
+      ctx.fill();
+
+      // Атлетичный торс в облегающей чёрной футболке
+      const shirtGrad = ctx.createLinearGradient(-10, -45, 10, -21);
+      shirtGrad.addColorStop(0, '#1f2430');
+      shirtGrad.addColorStop(0.5, '#11141c');
+      shirtGrad.addColorStop(1, '#090b10');
+      ctx.fillStyle = shirtGrad;
+      ctx.strokeStyle = '#2c3342';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(-10.5, -44);
+      ctx.lineTo(10.5, -44);
+      ctx.lineTo(7.2, -21);
+      ctx.lineTo(-7.2, -21);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Короткий рукав футболки
+      ctx.fillStyle = '#151922';
+      ctx.beginPath();
+      ctx.roundRect(3.8, -44, 6.8, 6.8, 3);
+      ctx.fill();
+
+      // Рука (машет при приближении Зевса)
+      ctx.strokeStyle = '#eab892';
+      ctx.lineWidth = 4.1;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      if (isGreeting) {
+        const waveAngle = -2.28 + Math.sin(streetCompanion.happyPhase) * 0.38;
+        const elbowX = 8.5 + Math.cos(waveAngle + 0.35) * 7.2;
+        const elbowY = -38 + Math.sin(waveAngle + 0.35) * 7.2;
+        const handX = elbowX + Math.cos(waveAngle - 0.15) * 8;
+        const handY = elbowY + Math.sin(waveAngle - 0.15) * 8;
+        ctx.moveTo(7.8, -39);
+        ctx.lineTo(elbowX, elbowY);
+        ctx.lineTo(handX, handY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#eab892';
+        ctx.beginPath();
+        ctx.arc(handX, handY, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const armSwing = stepSwing * 0.72;
+        ctx.moveTo(7.2, -39);
+        ctx.lineTo(7.8 - armSwing * 0.5, -30);
+        ctx.lineTo(8.5 - armSwing, -22);
+        ctx.stroke();
+
+        ctx.fillStyle = '#eab892';
+        ctx.beginPath();
+        ctx.arc(8.5 - armSwing, -21.5, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      // Шея и скульптурное лицо
+      ctx.fillStyle = '#dfa980';
+      ctx.fillRect(-3.2, -47, 6.4, 4.2);
+
+      ctx.fillStyle = '#eab892';
+      ctx.strokeStyle = '#c9936b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(-7, -55);
+      ctx.quadraticCurveTo(-7.5, -48, -3.2, -45.2);
+      ctx.lineTo(4, -45);
+      ctx.quadraticCurveTo(8, -47.5, 7.6, -54.5);
+      ctx.quadraticCurveTo(6, -61.5, -1, -61.5);
+      ctx.quadraticCurveTo(-7, -61, -7, -55);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Лёгкая тень скулы и щетина
+      ctx.fillStyle = 'rgba(65, 52, 46, 0.2)';
+      ctx.beginPath();
+      ctx.moveTo(-2.8, -48.5);
+      ctx.lineTo(6.2, -48.5);
+      ctx.lineTo(4.2, -45.2);
+      ctx.lineTo(-3, -45.4);
+      ctx.closePath();
+      ctx.fill();
+
+      // Спокойная линия губ
+      ctx.strokeStyle = '#8c5a44';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(1.8, -47.6);
+      ctx.lineTo(6.1, -47.6);
+      ctx.stroke();
+
+      // Тёмные волосы с объёмом спереди
+      ctx.fillStyle = '#1b191e';
+      ctx.beginPath();
+      ctx.moveTo(-7.6, -52.5);
+      ctx.quadraticCurveTo(-8.5, -60, -2.8, -62.5);
+      ctx.quadraticCurveTo(4.2, -63.8, 8, -59);
+      ctx.quadraticCurveTo(5, -57.2, 0.4, -58.2);
+      ctx.quadraticCurveTo(-3.8, -58.5, -4.8, -52);
+      ctx.closePath();
+      ctx.fill();
+
+      // Прямоугольные чёрные солнцезащитные очки с бликом
+      ctx.fillStyle = '#07090d';
+      ctx.strokeStyle = '#333b4d';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.roundRect(0.2, -55.8, 8.6, 4.2, 1.3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#141821';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-4.6, -53.8);
+      ctx.lineTo(0.5, -54.2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(2, -55.2);
+      ctx.lineTo(4.1, -52.4);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 4) Ахиллес в золотом коринфском шлеме с алым гребнем (300..399)
+    function drawAchilles() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -2;
+      const step = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 6;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      // Тень
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 17, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Ноги в бронзовых поножах
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 4.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-3.5, -22);
+      ctx.lineTo(-4 + step, -3.5);
+      ctx.moveTo(3.5, -22);
+      ctx.lineTo(4 - step, -3.5);
+      ctx.stroke();
+
+      // Античная бронзовая кираса и алая туника
+      ctx.fillStyle = '#b91c1c';
+      ctx.beginPath();
+      ctx.moveTo(-9, -24);
+      ctx.lineTo(9, -24);
+      ctx.lineTo(11, -16);
+      ctx.lineTo(-11, -16);
+      ctx.closePath();
+      ctx.fill();
+
+      const armorGrad = ctx.createLinearGradient(-10, -45, 10, -22);
+      armorGrad.addColorStop(0, '#fde047');
+      armorGrad.addColorStop(0.5, '#f59e0b');
+      armorGrad.addColorStop(1, '#b45309');
+      ctx.fillStyle = armorGrad;
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(-10.5, -44);
+      ctx.lineTo(10.5, -44);
+      ctx.lineTo(8, -23);
+      ctx.lineTo(-8, -23);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Копьё в руке (при приветствии поднимает вверх)
+      ctx.save();
+      if (isGreeting) {
+        ctx.translate(10, -38);
+        ctx.rotate(-0.2 + Math.sin(streetCompanion.happyPhase) * 0.12);
+      } else {
+        ctx.translate(8, -32);
+        ctx.rotate(0.15);
+      }
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 2.6;
+      ctx.beginPath();
+      ctx.moveTo(0, 26);
+      ctx.lineTo(0, -34);
+      ctx.stroke();
+
+      // Золотой наконечник копья
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.moveTo(-3.2, -33);
+      ctx.lineTo(0, -43);
+      ctx.lineTo(3.2, -33);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // Круглый спартанский щит сбоку
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.arc(-4, -32, 10.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = '#b91c1c';
+      ctx.beginPath();
+      ctx.arc(-4, -32, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Голова в золотом коринфском шлеме
+      ctx.fillStyle = '#eab892';
+      ctx.beginPath();
+      ctx.arc(0, -52, 7.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Алый плюмаж (гребень шлема)
+      ctx.fillStyle = '#dc2626';
+      ctx.strokeStyle = '#7f1d1d';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-10, -56);
+      ctx.quadraticCurveTo(-2, -72, 9, -60);
+      ctx.quadraticCurveTo(1, -58, -7, -51);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      // Золотой шлем
+      ctx.fillStyle = '#f59e0b';
+      ctx.strokeStyle = '#78350f';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.arc(0, -53, 8.2, Math.PI * 0.9, Math.PI * 2.12);
+      ctx.lineTo(7.5, -47);
+      ctx.lineTo(2.5, -47);
+      ctx.lineTo(2.5, -52);
+      ctx.lineTo(-2, -52);
+      ctx.lineTo(-2, -47);
+      ctx.lineTo(-7.5, -47);
+      ctx.closePath();
       ctx.fill();
       ctx.stroke();
 
@@ -2447,17 +2483,17 @@
         case 'cyber_guard':
           drawCyberGuard();
           break;
-        case 'minotaur':
-          drawMinotaur();
+        case 'achilles':
+          drawAchilles();
           break;
         case 'durov':
           drawDurov();
           break;
-        case 'sheikh':
-          drawSheikh();
+        case 'minotaur':
+          drawMinotaur();
           break;
         default:
-          drawWhippetDog();
+          drawCerberus();
           break;
       }
     }
