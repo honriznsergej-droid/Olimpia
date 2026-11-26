@@ -1,0 +1,3185 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Olympus Monkey Zeus Flight</title>
+  <link rel="preload" as="image" href="monkey.png" />
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: #141e30;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #fff;
+      touch-action: none;
+    }
+
+    #game-wrapper {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .hud {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 10px;
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .hud-left {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      min-width: 165px;
+      max-width: 245px;
+      width: 45%;
+    }
+
+    .energy-box {
+      background: rgba(18, 26, 46, 0.76);
+      border: 1px solid rgba(255, 215, 102, 0.35);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 8px 10px;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .energy-label {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+      margin-bottom: 5px;
+      color: #ffe58f;
+    }
+
+    .energy-track {
+      width: 100%;
+      height: 10px;
+      background: rgba(255, 255, 255, 0.14);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+
+    .energy-fill {
+      height: 100%;
+      width: 100%;
+      border-radius: 999px;
+      background: linear-gradient(90deg, #ff9e00 0%, #ffd166 55%, #4cc9f0 100%);
+      transition: width 0.06s linear;
+    }
+
+    .hud-right {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .hud-icon-btn {
+      pointer-events: auto;
+      width: 42px;
+      height: 44px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 215, 102, 0.35);
+      background: rgba(18, 26, 46, 0.76);
+      backdrop-filter: blur(8px);
+      color: #fff;
+      font-size: 17px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+      transition: transform 0.1s ease, background 0.15s ease;
+    }
+
+    .hud-icon-btn:active {
+      transform: scale(0.94);
+    }
+
+    .hud-icon-btn.muted {
+      opacity: 0.65;
+      color: #ff8fa3;
+    }
+
+    .stat-pill {
+      background: rgba(18, 26, 46, 0.76);
+      border: 1px solid rgba(255, 215, 102, 0.35);
+      backdrop-filter: blur(8px);
+      border-radius: 12px;
+      padding: 8px 11px;
+      text-align: right;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .stat-title {
+      font-size: 10px;
+      text-transform: uppercase;
+      opacity: 0.78;
+      letter-spacing: 0.6px;
+      color: #ffe58f;
+    }
+
+    .stat-value {
+      font-size: 18px;
+      font-weight: 800;
+      line-height: 1.15;
+    }
+
+    .overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(12, 18, 34, 0.58);
+      backdrop-filter: blur(6px);
+      z-index: 20;
+      transition: opacity 0.2s ease;
+    }
+
+    .overlay.hidden {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 380px;
+      background: rgba(20, 29, 52, 0.94);
+      border: 1px solid rgba(255, 215, 102, 0.32);
+      border-radius: 22px;
+      padding: 24px 20px;
+      text-align: center;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+    }
+
+    .badge {
+      display: inline-block;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+      color: #ffd166;
+      background: rgba(255, 209, 102, 0.14);
+      border: 1px solid rgba(255, 209, 102, 0.35);
+      padding: 4px 10px;
+      border-radius: 999px;
+      margin-bottom: 10px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 800;
+      margin-bottom: 8px;
+      color: #fff8e7;
+    }
+
+    p.desc {
+      font-size: 14px;
+      line-height: 1.45;
+      color: rgba(255, 255, 255, 0.85);
+      margin-bottom: 18px;
+    }
+
+    .btn-primary {
+      width: 100%;
+      border: none;
+      border-radius: 14px;
+      padding: 14px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      color: #161b26;
+      background: linear-gradient(135deg, #ffe066 0%, #f77f00 100%);
+      cursor: pointer;
+      box-shadow: 0 10px 24px rgba(247, 127, 0, 0.35);
+      transition: transform 0.1s ease, filter 0.15s ease;
+    }
+
+    .btn-primary:active {
+      transform: scale(0.97);
+    }
+
+    .final-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 18px;
+    }
+
+    .final-box {
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 215, 102, 0.22);
+      border-radius: 14px;
+      padding: 12px;
+    }
+
+    .final-box .num {
+      font-size: 22px;
+      font-weight: 800;
+      color: #ffd166;
+    }
+
+    .final-box .lbl {
+      font-size: 11px;
+      opacity: 0.78;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-wrapper">
+    <canvas id="gameCanvas"></canvas>
+
+    <div class="hud">
+      <div class="hud-left">
+        <div class="energy-box">
+          <div class="energy-label">
+            <span>⚡ СИЛА МОЛНИЙ</span>
+            <span id="energyText">100%</span>
+          </div>
+          <div class="energy-track">
+            <div class="energy-fill" id="energyFill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-right">
+        <button class="hud-icon-btn" id="soundBtn" type="button" aria-label="Звук">🔊</button>
+        <div class="stat-pill">
+          <div class="stat-title">Бананы</div>
+          <div class="stat-value" id="scoreVal">0</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-title">Рекорд</div>
+          <div class="stat-value" id="bestVal">0</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay" id="startOverlay">
+      <div class="card">
+        <div class="badge">Повелитель Олимпа</div>
+        <h1 id="greetingTitle">Полёт Зевса на облаке</h1>
+        <p class="desc">
+          <b>Зажми экран</b> (или пробел), чтобы зарядить облако молниями и взлететь выше к Олимпу.
+          <b>Отпусти</b>, чтобы плавно парить вниз. Собирай золотые бананы 🍌 — они питают силу Зевса!
+        </p>
+        <button class="btn-primary" id="startBtn">ВЗЛЕТЕТЬ НА ОЛИМП!</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="gameOverOverlay">
+      <div class="card">
+        <div class="badge">Полёт завершён</div>
+        <h1>Испытание Олимпа!</h1>
+        <p class="desc" id="failReason">Сила молний иссякла или ты задел препятствие.</p>
+        <div class="final-stats">
+          <div class="final-box">
+            <div class="num" id="finalScore">0</div>
+            <div class="lbl">БАНАНЫ</div>
+          </div>
+          <div class="final-box">
+            <div class="num" id="finalBest">0</div>
+            <div class="lbl">ЛУЧШИЙ СЧЁТ</div>
+          </div>
+        </div>
+        <button class="btn-primary" id="restartBtn">ИГРАТЬ СНОВА</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Файл monkey.png лежит в корне репозитория рядом с index.html
+    const SPRITE_URL = 'monkey.png';
+
+    const tg = window.Telegram && window.Telegram.WebApp ? window.Telegram.WebApp : null;
+    if (tg) {
+      tg.ready();
+      tg.expand();
+      const user = tg.initDataUnsafe && tg.initDataUnsafe.user;
+      if (user && user.first_name) {
+        document.getElementById('greetingTitle').textContent = `Вперёд, ${user.first_name}!`;
+      }
+    }
+
+    function haptic(type = 'light') {
+      try {
+        if (tg && tg.HapticFeedback) {
+          if (type === 'error') tg.HapticFeedback.notificationOccurred('error');
+          else if (type === 'success') tg.HapticFeedback.notificationOccurred('success');
+          else tg.HapticFeedback.impactOccurred(type);
+        }
+      } catch (_) {}
+    }
+
+    // --- Звуковой синтезатор на Web Audio API ---
+    const soundBtn = document.getElementById('soundBtn');
+    let soundEnabled = localStorage.getItem('olympus_monkey_sound') !== 'off';
+    let audioCtx = null;
+    let lastThunderTick = 0;
+
+    function updateSoundUI() {
+      soundBtn.textContent = soundEnabled ? '🔊' : '🔇';
+      soundBtn.classList.toggle('muted', !soundEnabled);
+    }
+    updateSoundUI();
+
+    function ensureAudioContext() {
+      if (!soundEnabled) return null;
+      const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+      if (!AudioContextClass) return null;
+      if (!audioCtx) {
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume().catch(() => {});
+      }
+      return audioCtx;
+    }
+
+    function toggleSound(e) {
+      if (e) e.stopPropagation();
+      soundEnabled = !soundEnabled;
+      localStorage.setItem('olympus_monkey_sound', soundEnabled ? 'on' : 'off');
+      updateSoundUI();
+      if (soundEnabled) {
+        ensureAudioContext();
+        playBananaSound();
+      }
+    }
+
+    soundBtn.addEventListener('pointerdown', (e) => e.stopPropagation());
+    soundBtn.addEventListener('click', toggleSound);
+
+    function playLightningPulse() {
+      if (!soundEnabled) return;
+      const nowMs = performance.now();
+      if (nowMs - lastThunderTick < 90) return;
+      lastThunderTick = nowMs;
+
+      const ctxAudio = ensureAudioContext();
+      if (!ctxAudio) return;
+
+      const t = ctxAudio.currentTime;
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(140, t);
+      osc.frequency.exponentialRampToValueAtTime(260, t + 0.055);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.036, t + 0.012);
+      gain.gain.exponentialRampToValueAtTime(0.0008, t + 0.068);
+
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+      osc.start(t);
+      osc.stop(t + 0.075);
+    }
+
+    function playBananaSound() {
+      if (!soundEnabled) return;
+      const ctxAudio = ensureAudioContext();
+      if (!ctxAudio) return;
+
+      const t = ctxAudio.currentTime;
+      const notes = [659.25, 987.77];
+      notes.forEach((freq, idx) => {
+        const osc = ctxAudio.createOscillator();
+        const gain = ctxAudio.createGain();
+        const start = t + idx * 0.055;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.001, start);
+        gain.gain.linearRampToValueAtTime(0.11, start + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.001, start + 0.18);
+
+        osc.connect(gain);
+        gain.connect(ctxAudio.destination);
+        osc.start(start);
+        osc.stop(start + 0.19);
+      });
+    }
+
+    function playBarkSound() {
+      if (!soundEnabled) return;
+      const ctxAudio = ensureAudioContext();
+      if (!ctxAudio) return;
+
+      const t = ctxAudio.currentTime;
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(340, t);
+      osc.frequency.exponentialRampToValueAtTime(520, t + 0.045);
+      osc.frequency.exponentialRampToValueAtTime(240, t + 0.13);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.07, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.14);
+
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+      osc.start(t);
+      osc.stop(t + 0.15);
+    }
+
+    function playGreetChime() {
+      if (!soundEnabled) return;
+      const ctxAudio = ensureAudioContext();
+      if (!ctxAudio) return;
+
+      const t = ctxAudio.currentTime;
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, t);
+      osc.frequency.exponentialRampToValueAtTime(783.99, t + 0.12);
+
+      gain.gain.setValueAtTime(0.001, t);
+      gain.gain.linearRampToValueAtTime(0.06, t + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.15);
+
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+      osc.start(t);
+      osc.stop(t + 0.16);
+    }
+
+    function playCrashSound() {
+      if (!soundEnabled) return;
+      const ctxAudio = ensureAudioContext();
+      if (!ctxAudio) return;
+
+      const t = ctxAudio.currentTime;
+      const osc = ctxAudio.createOscillator();
+      const gain = ctxAudio.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(175, t);
+      osc.frequency.exponentialRampToValueAtTime(45, t + 0.36);
+
+      gain.gain.setValueAtTime(0.12, t);
+      gain.gain.exponentialRampToValueAtTime(0.001, t + 0.38);
+
+      osc.connect(gain);
+      gain.connect(ctxAudio.destination);
+      osc.start(t);
+      osc.stop(t + 0.39);
+    }
+
+    // --- Предзагрузка спрайта monkey.png и автоочистка чёрного фона ---
+    const canvas = document.getElementById('gameCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const energyFill = document.getElementById('energyFill');
+    const energyText = document.getElementById('energyText');
+    const scoreVal = document.getElementById('scoreVal');
+    const bestVal = document.getElementById('bestVal');
+    const startOverlay = document.getElementById('startOverlay');
+    const gameOverOverlay = document.getElementById('gameOverOverlay');
+    const failReason = document.getElementById('failReason');
+    const finalScore = document.getElementById('finalScore');
+    const finalBest = document.getElementById('finalBest');
+    const startBtn = document.getElementById('startBtn');
+    const restartBtn = document.getElementById('restartBtn');
+
+    let monkeySprite = null;
+    let spriteLoaded = false;
+
+    function cleanBlackBackgroundIfOpaque(img) {
+      const w = img.naturalWidth || img.width;
+      const h = img.naturalHeight || img.height;
+      if (!w || !h) return img;
+
+      const off = document.createElement('canvas');
+      off.width = w;
+      off.height = h;
+      const octx = off.getContext('2d');
+      octx.drawImage(img, 0, 0, w, h);
+
+      let imgData;
+      try {
+        imgData = octx.getImageData(0, 0, w, h);
+      } catch (_) {
+        return img;
+      }
+
+      const px = imgData.data;
+      for (let i = 3; i < px.length; i += 4) {
+        if (px[i] < 245) return off;
+      }
+
+      const corners = [[0, 0], [w - 1, 0], [0, h - 1], [w - 1, h - 1]];
+      let avg = 0;
+      for (const [cx, cy] of corners) {
+        const idx = (cy * w + cx) * 4;
+        avg += px[idx] + px[idx + 1] + px[idx + 2];
+      }
+      if (avg / 12 > 18) return off;
+
+      for (let i = 0; i < px.length; i += 4) {
+        const maxC = Math.max(px[i], px[i + 1], px[i + 2]);
+        if (maxC < 16) {
+          px[i + 3] = 0;
+        } else if (maxC < 42) {
+          px[i + 3] = Math.round(((maxC - 16) / 26) * 255);
+        }
+      }
+
+      octx.putImageData(imgData, 0, 0);
+      return off;
+    }
+
+    function preloadMainSprite() {
+      return new Promise((resolve) => {
+        const img = new Image();
+        img.decoding = 'sync';
+        img.fetchPriority = 'high';
+
+        const finishSuccess = () => {
+          monkeySprite = cleanBlackBackgroundIfOpaque(img);
+          spriteLoaded = true;
+          resolve(true);
+        };
+
+        img.onload = () => {
+          if (img.decode) {
+            img.decode().then(finishSuccess).catch(finishSuccess);
+          } else {
+            finishSuccess();
+          }
+        };
+
+        img.onerror = () => {
+          spriteLoaded = false;
+          monkeySprite = null;
+          resolve(false);
+        };
+
+        img.src = SPRITE_URL;
+      });
+    }
+
+    const spriteReadyPromise = preloadMainSprite();
+
+    let width = 0;
+    let height = 0;
+    let dpr = 1;
+    let groundHeight = 84;
+
+    function resize() {
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+      groundHeight = Math.max(72, Math.min(96, height * 0.12));
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initScenery();
+    }
+
+    let clouds = [];
+    let farMountains = [];
+    let midTemples = [];
+    let streetProps = [];
+
+    // Спутники на мраморной дороге Олимпа (меняются каждые 100 бананов)
+    const streetCompanion = {
+      x: 260,
+      dir: 1,
+      movePhase: 0,
+      happyPhase: 0,
+      greeting: false,
+      greetCooldown: 0,
+      role: 'dog'
+    };
+
+    function getCompanionRoleByScore(pts) {
+      if (pts >= 700) return 'gorilla_king';
+      if (pts >= 600) return 'genie';
+      if (pts >= 500) return 'musk';
+      if (pts >= 400) return 'cyber_guard';
+      if (pts >= 300) return 'minotaur';
+      if (pts >= 200) return 'durov';
+      if (pts >= 100) return 'sheikh';
+      return 'dog';
+    }
+
+    function setCompanionRole(newRole, announce = true) {
+      if (streetCompanion.role === newRole) return;
+      streetCompanion.role = newRole;
+      streetCompanion.greetCooldown = 0;
+
+      const groundY = height - groundHeight;
+      addParticles(streetCompanion.x, groundY - 32, 18, ['#ffd166', '#ffffff', '#90e0ef', '#f77f00'], [45, 130]);
+      if (announce) {
+        const announcements = {
+          dog: ['ГОНЧАЯ ОЛИМПА', '#ffe066', -62],
+          sheikh: ['100 🍌 · ГЕРМЕС', '#ffd166', -80],
+          durov: ['200 🍌 · ПАВЕЛ ДУРОВ', '#90e0ef', -84],
+          minotaur: ['300 🍌 · МИНОТАВР В ОЧКАХ', '#ffd166', -86],
+          cyber_guard: ['400 🍌 · СТРАЖ ГЕФЕСТА', '#4cc9f0', -86],
+          musk: ['500 🍌 · ИЛОН МАСК', '#ff9e00', -84],
+          genie: ['600 🍌 · ЗОЛОТОЙ ТИТАН', '#ffd166', -92],
+          gorilla_king: ['700 🍌 · ЦАРЬ ОЛИМПА', '#ffe066', -96]
+        };
+        const [label, color, offsetY] = announcements[newRole] || ['НОВЫЙ СПУТНИК', '#ffd166', -80];
+        addFloatingText(streetCompanion.x, groundY + offsetY, label, color);
+      }
+    }
+
+    function randomTempleStyle() {
+      const r = Math.random();
+      if (r < 0.35) return 'parthenon';
+      if (r < 0.68) return 'rotunda';
+      return 'obelisk';
+    }
+
+    function initScenery() {
+      clouds = Array.from({ length: 6 }, (_, i) => ({
+        x: (width / 5) * i + Math.random() * 80,
+        y: 55 + Math.random() * (height * 0.24),
+        scale: 0.7 + Math.random() * 0.65,
+        speed: 10 + Math.random() * 14
+      }));
+
+      farMountains = [];
+      let fx = -60;
+      while (fx < width + 280) {
+        const mw = 130 + Math.random() * 110;
+        const mh = 130 + Math.random() * 135;
+        farMountains.push({
+          x: fx,
+          w: mw,
+          h: mh,
+          hasTemple: Math.random() < 0.45
+        });
+        fx += mw * 0.72;
+      }
+
+      midTemples = [];
+      let mx = -60;
+      while (mx < width + 280) {
+        const bw = 110 + Math.random() * 75;
+        const bh = 115 + Math.random() * 115;
+        midTemples.push({
+          x: mx,
+          w: bw,
+          h: bh,
+          cols: Math.max(4, Math.floor(bw / 22)),
+          tone: Math.floor(Math.random() * 3),
+          style: randomTempleStyle()
+        });
+        mx += bw + 34;
+      }
+
+      streetProps = [];
+      let sx = 45;
+      while (sx < width + 240) {
+        streetProps.push({
+          x: sx,
+          type: Math.random() < 0.52 ? 'amphora' : 'cypress',
+          scale: 0.85 + Math.random() * 0.3
+        });
+        sx += 140 + Math.random() * 95;
+      }
+
+      streetCompanion.x = Math.max(85, Math.min(width - 85, width * 0.58));
+    }
+
+    window.addEventListener('resize', resize);
+
+    let bestScore = Number(localStorage.getItem('olympus_monkey_best') || 0);
+    bestVal.textContent = bestScore;
+
+    let state = 'menu';
+    let holding = false;
+    let score = 0;
+    let worldSpeed = 210;
+    let screenShake = 0;
+    let hitFlash = 0;
+    let elapsed = 0;
+    let skyFlyerIndex = 0;
+
+    const player = {
+      x: 110,
+      y: 220,
+      vy: 0,
+      radiusX: 30,
+      radiusY: 36,
+      angle: 0,
+      energy: 100,
+      maxEnergy: 100,
+      auraPhase: 0,
+      cymbalTimer: 0
+    };
+
+    let obstacles = [];
+    let bananas = [];
+    let particles = [];
+    let floatingTexts = [];
+    let spawnTimer = 0;
+    let bananaPatternTimer = 0;
+
+    function resetGame() {
+      player.x = Math.min(150, Math.max(85, width * 0.24));
+      player.y = Math.max(130, (height - groundHeight) * 0.42);
+      player.vy = 0;
+      player.angle = 0;
+      player.energy = 100;
+      player.auraPhase = 0;
+      player.cymbalTimer = 0;
+
+      streetCompanion.greetCooldown = 0;
+      streetCompanion.greeting = false;
+      setCompanionRole('dog', false);
+
+      obstacles = [];
+      bananas = [];
+      particles = [];
+      floatingTexts = [];
+      score = 0;
+      skyFlyerIndex = 0;
+      worldSpeed = 215;
+      screenShake = 0;
+      hitFlash = 0;
+      spawnTimer = 1.1;
+      bananaPatternTimer = 0.6;
+
+      scoreVal.textContent = '0';
+      updateEnergyUI();
+    }
+
+    async function startGame() {
+      ensureAudioContext();
+
+      if (!spriteLoaded) {
+        startBtn.textContent = 'ЗАГРУЗКА...';
+        await Promise.race([
+          spriteReadyPromise,
+          new Promise((r) => setTimeout(r, 1500))
+        ]);
+        startBtn.textContent = 'ВЗЛЕТЕТЬ НА ОЛИМП!';
+      }
+
+      resetGame();
+      state = 'playing';
+      startOverlay.classList.add('hidden');
+      gameOverOverlay.classList.add('hidden');
+      haptic('medium');
+    }
+
+    function endGame(reason) {
+      if (state === 'gameover') return;
+      state = 'gameover';
+      holding = false;
+      screenShake = 14;
+      hitFlash = 0.45;
+      playCrashSound();
+      haptic('error');
+
+      const finalInt = Math.floor(score);
+      if (finalInt > bestScore) {
+        bestScore = finalInt;
+        localStorage.setItem('olympus_monkey_best', String(bestScore));
+      }
+
+      failReason.textContent = reason;
+      finalScore.textContent = finalInt;
+      finalBest.textContent = bestScore;
+      bestVal.textContent = bestScore;
+      gameOverOverlay.classList.remove('hidden');
+    }
+
+    function updateEnergyUI() {
+      const pct = Math.max(0, Math.min(100, Math.round((player.energy / player.maxEnergy) * 100)));
+      energyFill.style.width = `${pct}%`;
+      energyText.textContent = `${pct}%`;
+    }
+
+    function setHolding(active) {
+      if (state !== 'playing') {
+        holding = false;
+        return;
+      }
+      if (active) {
+        ensureAudioContext();
+        if (!holding && player.energy > 1) {
+          haptic('light');
+        }
+      }
+      holding = active;
+    }
+
+    window.addEventListener('pointerdown', (e) => {
+      if (e.target.closest('button') || e.target.closest('.overlay')) return;
+      setHolding(true);
+    });
+    window.addEventListener('pointerup', () => setHolding(false));
+    window.addEventListener('pointercancel', () => setHolding(false));
+
+    window.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+        if (state === 'playing') {
+          e.preventDefault();
+          setHolding(true);
+        }
+      }
+    });
+    window.addEventListener('keyup', (e) => {
+      if (e.code === 'Space' || e.code === 'ArrowUp' || e.code === 'KeyW') {
+        setHolding(false);
+      }
+    });
+
+    startBtn.addEventListener('click', startGame);
+    restartBtn.addEventListener('click', startGame);
+
+    function nextSkyFlyerKind() {
+      const order = ['shield', 'chariot', 'eagle'];
+      const kind = order[skyFlyerIndex % order.length];
+      skyFlyerIndex += 1;
+      return kind;
+    }
+
+    function spawnObstacle() {
+      const playableTop = 74;
+      const playableBottom = height - groundHeight - 10;
+      const playableH = Math.max(160, playableBottom - playableTop);
+
+      const typeRoll = Math.random();
+      if (typeRoll < 0.44) {
+        // Верхние препятствия: парящий Пегас, обычная грозовая туча или грозовое облако @JollyChimpGem
+        const topRoll = Math.random();
+        if (topRoll < 0.36) {
+          const w = 116;
+          const h = 68;
+          const by = playableTop + 26 + Math.random() * Math.max(24, playableH * 0.16);
+          obstacles.push({
+            kind: 'pegasus',
+            x: width + 75,
+            y: by,
+            baseY: by,
+            w,
+            h,
+            phase: Math.random() * Math.PI * 2
+          });
+        } else if (topRoll < 0.72) {
+          const w = 138;
+          const h = Math.min(144, Math.max(88, playableH * (0.22 + Math.random() * 0.13)));
+          obstacles.push({
+            kind: 'promo_cloud',
+            x: width + 75,
+            y: playableTop,
+            w,
+            h,
+            boltPhase: Math.random() * Math.PI * 2
+          });
+        } else {
+          const w = 74;
+          const h = Math.min(138, Math.max(80, playableH * (0.21 + Math.random() * 0.14)));
+          obstacles.push({
+            kind: 'storm_cloud',
+            x: width + 45,
+            y: playableTop,
+            w,
+            h,
+            boltPhase: Math.random() * Math.PI * 2
+          });
+        }
+      } else if (typeRoll < 0.76) {
+        // Нижние крупные препятствия: священное оливковое дерево или мраморная колонна
+        const isOlive = Math.random() < 0.52;
+        const w = isOlive ? 64 : 50;
+        const h = Math.min(220, Math.max(125, playableH * (0.31 + Math.random() * 0.16)));
+        obstacles.push({
+          kind: isOlive ? 'olive_tree' : 'marble_column',
+          x: width + 50,
+          y: playableBottom - h,
+          w,
+          h,
+          swayPhase: Math.random() * Math.PI * 2
+        });
+      } else {
+        const kind = nextSkyFlyerKind();
+        const r = kind === 'chariot' ? 46 : 24;
+        const cy = playableTop + 48 + Math.random() * Math.max(60, playableH - 96);
+        obstacles.push({
+          kind,
+          x: width + 60,
+          y: cy,
+          baseY: cy,
+          r,
+          phase: Math.random() * Math.PI * 2
+        });
+      }
+    }
+
+    function spawnBananaArc() {
+      const playableTop = 84;
+      const playableBottom = height - groundHeight - 36;
+      const midY = playableTop + Math.random() * Math.max(60, playableBottom - playableTop);
+      const count = 4;
+      const spacing = 42;
+      const startX = width + 50;
+
+      for (let i = 0; i < count; i++) {
+        const norm = (i / (count - 1)) * 2 - 1;
+        const arcOffset = (1 - norm * norm) * -36;
+        const by = Math.max(playableTop, Math.min(playableBottom, midY + arcOffset));
+        bananas.push({
+          x: startX + i * spacing,
+          y: by,
+          r: 16,
+          bobPhase: i * 0.6,
+          collected: false
+        });
+      }
+    }
+
+    function addParticles(x, y, count, colors, speedRange = [40, 140]) {
+      for (let i = 0; i < count; i++) {
+        const ang = Math.random() * Math.PI * 2;
+        const spd = speedRange[0] + Math.random() * (speedRange[1] - speedRange[0]);
+        particles.push({
+          x,
+          y,
+          vx: Math.cos(ang) * spd,
+          vy: Math.sin(ang) * spd - 20,
+          life: 0.35 + Math.random() * 0.35,
+          maxLife: 0.7,
+          size: 3 + Math.random() * 4,
+          color: colors[Math.floor(Math.random() * colors.length)]
+        });
+      }
+    }
+
+    function addFloatingText(x, y, text, color = '#ffe066') {
+      floatingTexts.push({
+        x,
+        y,
+        vy: -48,
+        text,
+        color,
+        life: 0.85,
+        maxLife: 0.85
+      });
+    }
+
+    function circleRectCollide(cx, cy, cr, rx, ry, rw, rh) {
+      const closestX = Math.max(rx, Math.min(cx, rx + rw));
+      const closestY = Math.max(ry, Math.min(cy, ry + rh));
+      const dx = cx - closestX;
+      const dy = cy - closestY;
+      return (dx * dx + dy * dy) < (cr * cr);
+    }
+
+    function getCrashReason(obs) {
+      if (obs.kind === 'shield') return 'Столкнулся с крылатым золотым щитом Афины!';
+      if (obs.kind === 'chariot') return 'Подрезал солнечную колесницу обезьянки-Гелиоса!';
+      if (obs.kind === 'eagle') return 'Пересёк траекторию золотого орла Зевса!';
+      if (obs.kind === 'pegasus') return 'Не разминулся в небе с крылатым Пегасом!';
+      if (obs.kind === 'promo_cloud') return 'Попал под молнию грозового облака @JollyChimpGem!';
+      if (obs.kind === 'storm_cloud') return 'Попал в чужую грозовую тучу!';
+      if (obs.kind === 'olive_tree') return 'Задел крону священного оливкового дерева!';
+      if (obs.kind === 'marble_column') return 'Врезался в античную мраморную колонну!';
+      return 'Столкновение с препятствием!';
+    }
+
+    function updateStreetCompanion(dt) {
+      if (state === 'playing') {
+        const targetRole = getCompanionRoleByScore(score);
+        if (streetCompanion.role !== targetRole) {
+          setCompanionRole(targetRole, true);
+        }
+      }
+
+      if (streetCompanion.greetCooldown > 0) {
+        streetCompanion.greetCooldown = Math.max(0, streetCompanion.greetCooldown - dt);
+      }
+
+      const dx = player.x - streetCompanion.x;
+      const dy = (height - groundHeight) - player.y;
+      const nearMonkey = Math.abs(dx) < 185 && dy < 280;
+
+      if (nearMonkey) {
+        streetCompanion.greeting = true;
+        streetCompanion.happyPhase += dt * 14;
+        if (Math.abs(dx) > 8) {
+          streetCompanion.dir = dx >= 0 ? 1 : -1;
+        }
+        if (state === 'playing' && streetCompanion.greetCooldown <= 0) {
+          streetCompanion.greetCooldown = 3.4;
+          const groundY = height - groundHeight;
+          const r = streetCompanion.role;
+          if (r === 'dog') {
+            playBarkSound();
+            addFloatingText(streetCompanion.x, groundY - 56, '🐾', '#ffe066');
+          } else if (r === 'minotaur') {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 78, '🐂', '#ffd166');
+          } else if (r === 'cyber_guard') {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 82, '⚡', '#4cc9f0');
+          } else if (r === 'musk') {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 82, '🚀', '#ff9e00');
+          } else if (r === 'genie') {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 88, '✨', '#ffd166');
+          } else if (r === 'gorilla_king') {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 92, '👑', '#ffe066');
+          } else {
+            playGreetChime();
+            addFloatingText(streetCompanion.x, groundY - 76, '👋', '#ffd166');
+          }
+        }
+      } else {
+        streetCompanion.greeting = false;
+        streetCompanion.happyPhase = 0;
+        const leftBound = Math.max(70, width * 0.26);
+        const rightBound = Math.max(leftBound + 90, width - 70);
+        const speed = streetCompanion.role === 'dog' ? 64 : (streetCompanion.role === 'minotaur' ? 40 : 44);
+        const freq = streetCompanion.role === 'dog' ? 14 : (streetCompanion.role === 'minotaur' ? 8 : 8.5);
+
+        streetCompanion.x += streetCompanion.dir * speed * dt;
+        streetCompanion.movePhase += dt * freq;
+
+        if (streetCompanion.x >= rightBound) {
+          streetCompanion.x = rightBound;
+          streetCompanion.dir = -1;
+        } else if (streetCompanion.x <= leftBound) {
+          streetCompanion.x = leftBound;
+          streetCompanion.dir = 1;
+        }
+      }
+    }
+
+    function update(dt) {
+      elapsed += dt;
+
+      if (screenShake > 0) screenShake = Math.max(0, screenShake - dt * 36);
+      if (hitFlash > 0) hitFlash = Math.max(0, hitFlash - dt * 1.4);
+      if (player.cymbalTimer > 0) player.cymbalTimer = Math.max(0, player.cymbalTimer - dt);
+
+      updateStreetCompanion(dt);
+
+      const bgFactor = state === 'playing' ? 1 : 0.35;
+
+      for (const c of clouds) {
+        c.x -= c.speed * bgFactor * dt;
+        if (c.x < -160) {
+          c.x = width + 140;
+          c.y = 45 + Math.random() * (height * 0.24);
+        }
+      }
+
+      for (const m of farMountains) {
+        m.x -= worldSpeed * 0.2 * bgFactor * dt;
+      }
+      if (farMountains.length && farMountains[0].x + farMountains[0].w < -80) {
+        const first = farMountains.shift();
+        const last = farMountains[farMountains.length - 1];
+        first.x = last.x + last.w * 0.72;
+        first.h = 130 + Math.random() * 135;
+        first.hasTemple = Math.random() < 0.45;
+        farMountains.push(first);
+      }
+
+      for (const t of midTemples) {
+        t.x -= worldSpeed * 0.52 * bgFactor * dt;
+      }
+      if (midTemples.length && midTemples[0].x + midTemples[0].w < -120) {
+        const first = midTemples.shift();
+        const last = midTemples[midTemples.length - 1];
+        first.x = last.x + last.w + 34;
+        first.h = 115 + Math.random() * 115;
+        first.style = randomTempleStyle();
+        midTemples.push(first);
+      }
+
+      for (const p of streetProps) {
+        p.x -= worldSpeed * 0.85 * bgFactor * dt;
+        if (p.x < -70) {
+          p.x = width + 80 + Math.random() * 90;
+        }
+      }
+
+      if (state !== 'playing') {
+        player.y = (height - groundHeight) * 0.42 + Math.sin(elapsed * 2.5) * 8;
+        player.auraPhase += dt * 6;
+        return;
+      }
+
+      worldSpeed = Math.min(390, 215 + score * 2.5);
+
+      const canThrust = holding && player.energy > 0.2;
+      if (canThrust) {
+        player.vy -= 1180 * dt;
+        player.energy = Math.max(0, player.energy - 27 * dt);
+        player.auraPhase += dt * 18;
+        playLightningPulse();
+      } else {
+        holding = false;
+        player.vy += 690 * dt;
+        player.energy = Math.min(player.maxEnergy, player.energy + 11 * dt);
+        player.auraPhase += dt * 5;
+      }
+
+      player.vy = Math.max(-360, Math.min(370, player.vy));
+      player.y += player.vy * dt;
+
+      const targetAngle = Math.max(-0.22, Math.min(0.26, player.vy * 0.00065));
+      player.angle += (targetAngle - player.angle) * Math.min(1, dt * 10);
+
+      updateEnergyUI();
+
+      if (player.energy <= 0) {
+        endGame('Сила молний Зевса иссякла! Собирай золотые бананы, чтобы заряжать облако.');
+        return;
+      }
+
+      const ceilingY = 58;
+      if (player.y - player.radiusY < ceilingY) {
+        player.y = ceilingY + player.radiusY;
+        player.vy = Math.max(0, player.vy);
+      }
+
+      const groundY = height - groundHeight;
+      if (player.y + player.radiusY >= groundY) {
+        player.y = groundY - player.radiusY;
+        endGame('Облако Зевса опустилось слишком низко на камни!');
+        return;
+      }
+
+      spawnTimer -= dt;
+      if (spawnTimer <= 0) {
+        spawnObstacle();
+        const minGap = Math.max(1.05, 1.78 - score * 0.015);
+        spawnTimer = minGap + Math.random() * 0.55;
+      }
+
+      bananaPatternTimer -= dt;
+      if (bananaPatternTimer <= 0) {
+        spawnBananaArc();
+        bananaPatternTimer = 2.2 + Math.random() * 1.4;
+      }
+
+      for (let i = obstacles.length - 1; i >= 0; i--) {
+        const obs = obstacles[i];
+        obs.x -= worldSpeed * dt;
+
+        if (obs.kind === 'shield' || obs.kind === 'chariot' || obs.kind === 'eagle') {
+          obs.phase += dt * (obs.kind === 'eagle' ? 4.4 : 3.2);
+          obs.y = obs.baseY + Math.sin(obs.phase) * (obs.kind === 'shield' ? 22 : 18);
+        } else if (obs.kind === 'pegasus') {
+          obs.phase += dt * 3.1;
+          obs.y = obs.baseY + Math.sin(obs.phase) * 14;
+        } else if (obs.kind === 'storm_cloud' || obs.kind === 'promo_cloud') {
+          obs.boltPhase += dt * 7;
+        } else if (obs.kind === 'olive_tree' || obs.kind === 'marble_column') {
+          obs.swayPhase += dt * 3;
+        }
+
+        let hit = false;
+        const playerHitR = Math.min(player.radiusX, player.radiusY) * 0.74;
+
+        if (obs.kind === 'shield' || obs.kind === 'chariot' || obs.kind === 'eagle') {
+          const dx = player.x - obs.x;
+          const dy = player.y - obs.y;
+          const sumR = obs.r * 0.85 + playerHitR;
+          hit = (dx * dx + dy * dy) < (sumR * sumR);
+        } else if (obs.kind === 'pegasus') {
+          const nx = (player.x - obs.x) / (obs.w * 0.42 + playerHitR * 0.75);
+          const ny = (player.y - obs.y) / (obs.h * 0.34 + playerHitR * 0.75);
+          hit = (nx * nx + ny * ny) < 1;
+        } else if (obs.kind === 'storm_cloud' || obs.kind === 'promo_cloud') {
+          const cloudH = Math.min(50, obs.h * 0.46);
+          const hitCloud = circleRectCollide(
+            player.x,
+            player.y,
+            playerHitR,
+            obs.x + 6,
+            obs.y + 4,
+            obs.w - 12,
+            cloudH
+          );
+          const hitBolt = circleRectCollide(
+            player.x,
+            player.y,
+            playerHitR * 0.88,
+            obs.x + obs.w * 0.38,
+            obs.y + cloudH - 2,
+            obs.w * 0.24,
+            Math.max(16, obs.h - cloudH - 4)
+          );
+          hit = hitCloud || hitBolt;
+        } else if (obs.kind === 'olive_tree') {
+          const hitTrunk = circleRectCollide(
+            player.x,
+            player.y,
+            playerHitR,
+            obs.x + obs.w * 0.34,
+            obs.y + 34,
+            obs.w * 0.32,
+            obs.h - 36
+          );
+          const crownX = obs.x + obs.w * 0.5;
+          const crownY = obs.y + 26;
+          const dx = player.x - crownX;
+          const dy = player.y - crownY;
+          const crownR = 32 + playerHitR * 0.85;
+          hit = hitTrunk || (dx * dx + dy * dy) < (crownR * crownR);
+        } else if (obs.kind === 'marble_column') {
+          hit = circleRectCollide(
+            player.x,
+            player.y,
+            playerHitR,
+            obs.x + 6,
+            obs.y + 4,
+            obs.w - 12,
+            obs.h - 6
+          );
+        }
+
+        if (hit) {
+          addParticles(player.x, player.y, 18, ['#ffd166', '#4cc9f0', '#ffffff'], [70, 200]);
+          endGame(getCrashReason(obs));
+          return;
+        }
+
+        if (obs.x + (obs.w || obs.r * 2.4) < -160) {
+          obstacles.splice(i, 1);
+        }
+      }
+
+      for (let i = bananas.length - 1; i >= 0; i--) {
+        const b = bananas[i];
+        b.x -= worldSpeed * dt;
+        b.bobPhase += dt * 4.5;
+        const drawY = b.y + Math.sin(b.bobPhase) * 5;
+
+        const dx = player.x - b.x;
+        const dy = player.y - drawY;
+        const pickR = b.r + Math.max(player.radiusX, player.radiusY) * 0.85;
+        if (dx * dx + dy * dy <= pickR * pickR) {
+          player.energy = Math.min(player.maxEnergy, player.energy + 18);
+          score += 1;
+          player.cymbalTimer = 0.35;
+          scoreVal.textContent = String(score);
+          updateEnergyUI();
+          playBananaSound();
+          haptic('success');
+          addParticles(b.x, drawY, 10, ['#ffe066', '#ffb703', '#fff3b0'], [45, 130]);
+          addFloatingText(b.x, drawY - 10, '+1', '#ffe066');
+          bananas.splice(i, 1);
+          continue;
+        }
+
+        if (b.x < -50) {
+          bananas.splice(i, 1);
+        }
+      }
+
+      for (let i = particles.length - 1; i >= 0; i--) {
+        const p = particles[i];
+        p.x += p.vx * dt;
+        p.y += p.vy * dt;
+        p.life -= dt;
+        if (p.life <= 0) particles.splice(i, 1);
+      }
+
+      for (let i = floatingTexts.length - 1; i >= 0; i--) {
+        const ft = floatingTexts[i];
+        ft.y += ft.vy * dt;
+        ft.life -= dt;
+        if (ft.life <= 0) floatingTexts.splice(i, 1);
+      }
+    }
+
+    function drawGreekTemple(x, baseY, w, h, cols, style, tone) {
+      const marbleColors = ['#e9ecef', '#dee2e6', '#f8f9fa'];
+      const shadowColors = ['#adb5bd', '#9aa5b1', '#ced4da'];
+      const mainFill = marbleColors[tone % marbleColors.length];
+      const shadeFill = shadowColors[tone % shadowColors.length];
+
+      if (style === 'obelisk') {
+        const topW = w * 0.24;
+        ctx.fillStyle = shadeFill;
+        ctx.beginPath();
+        ctx.moveTo(x + w * 0.25, baseY);
+        ctx.lineTo(x + w * 0.5 - topW * 0.5, baseY - h + 24);
+        ctx.lineTo(x + w * 0.5, baseY - h);
+        ctx.lineTo(x + w * 0.5 + topW * 0.5, baseY - h + 24);
+        ctx.lineTo(x + w * 0.75, baseY);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = '#ffd166';
+        ctx.beginPath();
+        ctx.moveTo(x + w * 0.5 - topW * 0.5, baseY - h + 24);
+        ctx.lineTo(x + w * 0.5, baseY - h);
+        ctx.lineTo(x + w * 0.5 + topW * 0.5, baseY - h + 24);
+        ctx.closePath();
+        ctx.fill();
+        return;
+      }
+
+      const stepH = 12;
+      const roofH = style === 'rotunda' ? 32 : 28;
+      const bodyTop = baseY - h + roofH;
+      const bodyH = h - roofH - stepH;
+
+      // Ступенчатый стилобат (основание храма)
+      ctx.fillStyle = shadeFill;
+      ctx.fillRect(x - 6, baseY - stepH, w + 12, stepH);
+      ctx.fillStyle = mainFill;
+      ctx.fillRect(x - 2, baseY - stepH - 5, w + 4, 5);
+
+      // Колоннада
+      const colW = Math.max(7, (w - 16) / (cols * 1.75));
+      const gap = (w - 12 - colW * cols) / Math.max(1, cols - 1);
+      for (let i = 0; i < cols; i++) {
+        const cx = x + 6 + i * (colW + gap);
+        ctx.fillStyle = mainFill;
+        ctx.fillRect(cx, bodyTop, colW, bodyH);
+        ctx.fillStyle = shadeFill;
+        ctx.fillRect(cx + colW * 0.65, bodyTop, colW * 0.35, bodyH);
+      }
+
+      // Фронтон или купол ротонды
+      if (style === 'rotunda') {
+        ctx.fillStyle = mainFill;
+        ctx.beginPath();
+        ctx.arc(x + w * 0.5, bodyTop, w * 0.48, Math.PI, 0);
+        ctx.closePath();
+        ctx.fill();
+        ctx.fillStyle = '#ffd166';
+        ctx.fillRect(x - 4, bodyTop - 6, w + 8, 6);
+      } else {
+        ctx.fillStyle = mainFill;
+        ctx.beginPath();
+        ctx.moveTo(x - 8, bodyTop);
+        ctx.lineTo(x + w * 0.5, baseY - h);
+        ctx.lineTo(x + w + 8, bodyTop);
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.fillStyle = shadeFill;
+        ctx.beginPath();
+        ctx.moveTo(x + 6, bodyTop - 3);
+        ctx.lineTo(x + w * 0.5, baseY - h + 7);
+        ctx.lineTo(x + w - 6, bodyTop - 3);
+        ctx.closePath();
+        ctx.fill();
+      }
+    }
+
+    function drawBackground() {
+      // Небо Олимпа: глубокий лазурный верх и золотисто-персиковое сияние у горизонта
+      const skyGrad = ctx.createLinearGradient(0, 0, 0, height - groundHeight);
+      skyGrad.addColorStop(0, '#1e4e8c');
+      skyGrad.addColorStop(0.48, '#5ea4d6');
+      skyGrad.addColorStop(0.84, '#f6c28b');
+      skyGrad.addColorStop(1, '#ffe5a8');
+      ctx.fillStyle = skyGrad;
+      ctx.fillRect(0, 0, width, height);
+
+      // Золотое солнце Олимпа с мягкими лучами
+      const sunX = width * 0.76;
+      const sunY = Math.max(105, (height - groundHeight) * 0.3);
+      const sunGlow = ctx.createRadialGradient(sunX, sunY, 12, sunX, sunY, 150);
+      sunGlow.addColorStop(0, 'rgba(255, 250, 215, 0.98)');
+      sunGlow.addColorStop(0.35, 'rgba(255, 218, 120, 0.48)');
+      sunGlow.addColorStop(1, 'rgba(255, 218, 120, 0)');
+      ctx.fillStyle = sunGlow;
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 150, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fff9db';
+      ctx.beginPath();
+      ctx.arc(sunX, sunY, 36, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Пушистые облака Олимпа
+      for (const c of clouds) {
+        ctx.save();
+        ctx.translate(c.x, c.y);
+        ctx.scale(c.scale, c.scale);
+        ctx.fillStyle = 'rgba(255, 252, 244, 0.85)';
+        ctx.beginPath();
+        ctx.arc(0, 0, 24, 0, Math.PI * 2);
+        ctx.arc(22, -6, 28, 0, Math.PI * 2);
+        ctx.arc(48, 0, 22, 0, Math.PI * 2);
+        ctx.arc(24, 8, 22, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      const groundY = height - groundHeight;
+
+      // Дальние горные хребты Олимпа с храмами на вершинах
+      for (const m of farMountains) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(84, 114, 148, 0.52)';
+        ctx.beginPath();
+        ctx.moveTo(m.x, groundY);
+        ctx.lineTo(m.x + m.w * 0.44, groundY - m.h);
+        ctx.lineTo(m.x + m.w * 0.56, groundY - m.h);
+        ctx.lineTo(m.x + m.w, groundY);
+        ctx.closePath();
+        ctx.fill();
+
+        if (m.hasTemple) {
+          const tx = m.x + m.w * 0.41;
+          const ty = groundY - m.h;
+          ctx.fillStyle = 'rgba(255, 248, 230, 0.55)';
+          ctx.fillRect(tx, ty - 14, m.w * 0.18, 14);
+          ctx.beginPath();
+          ctx.moveTo(tx - 3, ty - 14);
+          ctx.lineTo(tx + m.w * 0.09, ty - 22);
+          ctx.lineTo(tx + m.w * 0.18 + 3, ty - 14);
+          ctx.closePath();
+          ctx.fill();
+        }
+        ctx.restore();
+      }
+
+      // Средний план: мраморные античные храмы и колоннады
+      for (const t of midTemples) {
+        ctx.save();
+        drawGreekTemple(t.x, groundY, t.w, t.h, t.cols, t.style, t.tone);
+        ctx.restore();
+      }
+
+      // Античный декор вдоль дороги: кипарисы и амфоры
+      for (const p of streetProps) {
+        ctx.save();
+        ctx.translate(p.x, groundY);
+        ctx.scale(p.scale, p.scale);
+        if (p.type === 'cypress') {
+          ctx.fillStyle = '#5c3d2e';
+          ctx.fillRect(-3, -24, 6, 24);
+          ctx.fillStyle = '#2d6a4f';
+          ctx.beginPath();
+          ctx.ellipse(0, -52, 11, 34, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Античная терракотовая амфора
+          ctx.fillStyle = '#bc6c25';
+          ctx.strokeStyle = '#7f4f24';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.ellipse(0, -14, 9, 13, 0, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillRect(-4, -30, 8, 5);
+        }
+        ctx.restore();
+      }
+
+      // Обычная мощёная песчано-каменная дорожка (вместо асфальта)
+      const pathGrad = ctx.createLinearGradient(0, groundY, 0, height);
+      pathGrad.addColorStop(0, '#d4a373');
+      pathGrad.addColorStop(0.28, '#bc8a5f');
+      pathGrad.addColorStop(1, '#8b5e34');
+      ctx.fillStyle = pathGrad;
+      ctx.fillRect(0, groundY, width, groundHeight);
+
+      // Травянистая зелёная обочина вдоль тропинки
+      ctx.fillStyle = '#588157';
+      ctx.fillRect(0, groundY, width, 7);
+      ctx.fillStyle = '#a3b18a';
+      ctx.fillRect(0, groundY, width, 2.5);
+
+      // Ровно движущиеся каменные плиты мощёной дорожки (без вертикальных скачков)
+      const tileStep = 72;
+      const scroll = (elapsed * worldSpeed * 0.95) % tileStep;
+      ctx.fillStyle = 'rgba(255, 248, 235, 0.28)';
+      ctx.strokeStyle = 'rgba(110, 74, 48, 0.35)';
+      ctx.lineWidth = 1.4;
+      for (let x = -scroll - tileStep; x < width + tileStep; x += tileStep) {
+        ctx.beginPath();
+        ctx.roundRect(x + 6, groundY + 14, 54, 15, 6);
+        ctx.fill();
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.roundRect(x + 36, groundY + 35, 50, 15, 6);
+        ctx.fill();
+        ctx.stroke();
+      }
+    }
+
+    // --- Спутники на мраморной тропе Олимпа ---
+    // 1) Гончий уиппет в красной тунике (0..99)
+    function drawWhippetDog() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bounce = isGreeting
+        ? -Math.abs(Math.sin(streetCompanion.happyPhase * 0.6)) * 5
+        : -Math.abs(Math.sin(streetCompanion.movePhase)) * 3.2;
+
+      const legSwing = isGreeting
+        ? Math.sin(streetCompanion.happyPhase) * 3
+        : Math.sin(streetCompanion.movePhase) * 8;
+
+      const tailWag = isGreeting
+        ? Math.sin(streetCompanion.happyPhase * 1.4) * 0.65
+        : Math.sin(streetCompanion.movePhase * 0.8) * 0.25;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bounce);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bounce, 18, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.save();
+      ctx.translate(-15, -16);
+      ctx.rotate(tailWag);
+      ctx.strokeStyle = '#c8c4be';
+      ctx.lineWidth = 2.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(0, 0);
+      ctx.quadraticCurveTo(-8, 4, -10, -4);
+      ctx.stroke();
+      ctx.restore();
+
+      ctx.strokeStyle = '#b8b4ae';
+      ctx.lineWidth = 2.8;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-11, -13);
+      ctx.lineTo(-13 - legSwing * 0.8, -1);
+      ctx.moveTo(9, -13);
+      ctx.lineTo(10 + legSwing * 0.8, -1);
+      ctx.stroke();
+
+      ctx.fillStyle = '#9e2a1c';
+      ctx.strokeStyle = '#6e190f';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-16, -15);
+      ctx.quadraticCurveTo(-4, -22, 12, -20);
+      ctx.lineTo(14, -11);
+      ctx.quadraticCurveTo(2, -9, -14, -12);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(8, -15, 4.5, -0.4, 1.9);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#e5e2dc';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(-10, -13);
+      ctx.lineTo(-11 + legSwing, -1);
+      if (isGreeting) {
+        const pawLift = Math.sin(streetCompanion.happyPhase) * 3;
+        ctx.moveTo(9, -13);
+        ctx.lineTo(15, -9 + pawLift);
+        ctx.lineTo(19, -12 + pawLift);
+      } else {
+        ctx.moveTo(9, -13);
+        ctx.lineTo(9 - legSwing, -1);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#a83020';
+      ctx.strokeStyle = '#731b10';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(5, -18);
+      ctx.lineTo(8, -32);
+      ctx.lineTo(19, -30);
+      ctx.lineTo(15, -14);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(8, -32);
+      ctx.lineTo(19, -30);
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(14, -33);
+      if (isGreeting) {
+        ctx.rotate(-0.22);
+      }
+
+      ctx.fillStyle = '#dcdad5';
+      ctx.beginPath();
+      ctx.moveTo(-5, 4);
+      ctx.lineTo(-3, -4);
+      ctx.lineTo(5, -3);
+      ctx.lineTo(3, 4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#eceae6';
+      ctx.strokeStyle = '#9e9b95';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(-4, -5);
+      ctx.quadraticCurveTo(2, -8, 8, -5);
+      ctx.lineTo(20, -2.5);
+      ctx.quadraticCurveTo(22, -1, 20, 1.5);
+      ctx.lineTo(7, 2.5);
+      ctx.quadraticCurveTo(1, 3, -4, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#2b2927';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(11, 1.2);
+      ctx.lineTo(19.5, 0.8);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1f1e1d';
+      ctx.beginPath();
+      ctx.arc(20.6, -1.2, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#5c3a21';
+      ctx.beginPath();
+      ctx.arc(7.5, -3.2, 1.9, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(8, -3.7, 0.65, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#8b8a88';
+      ctx.strokeStyle = '#5e5d5b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(1, -5.5);
+      ctx.quadraticCurveTo(-5, -7, -7, 0.5);
+      ctx.quadraticCurveTo(-4, 1.5, -1, -2.5);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+      ctx.restore();
+    }
+
+    // 2) Посланник Олимпа (100..199)
+    function drawSheikh() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
+      const step = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 4.5;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 16, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#5c3a21';
+      ctx.beginPath();
+      ctx.roundRect(-7 - step, -3.5, 7, 3.5, 1.5);
+      ctx.roundRect(1 + step, -3.5, 7, 3.5, 1.5);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-9, -40);
+      ctx.lineTo(9, -40);
+      ctx.lineTo(13, -3);
+      ctx.lineTo(-13, -3);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-10, -24);
+      ctx.lineTo(10, -24);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f8fafc';
+      ctx.lineWidth = 5.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      if (isGreeting) {
+        const waveAngle = -2.25 + Math.sin(streetCompanion.happyPhase) * 0.35;
+        const handX = 6 + Math.cos(waveAngle) * 14;
+        const handY = -34 + Math.sin(waveAngle) * 14;
+        ctx.moveTo(6, -34);
+        ctx.lineTo(handX, handY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#d99b66';
+        ctx.beginPath();
+        ctx.arc(handX, handY, 3.3, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.moveTo(4, -35);
+        ctx.lineTo(4 - step * 0.8, -20);
+        ctx.stroke();
+
+        ctx.fillStyle = '#d99b66';
+        ctx.beginPath();
+        ctx.arc(4 - step * 0.8, -19.5, 2.8, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-6, -54);
+      ctx.quadraticCurveTo(-15, -44, -14, -27);
+      ctx.lineTo(-5, -29);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#d99b66';
+      ctx.beginPath();
+      ctx.arc(1, -47, 8.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(1.5, -45.5, 8.2, 0.05, Math.PI * 0.92);
+      ctx.lineTo(-3, -44);
+      ctx.quadraticCurveTo(3, -41.5, 8.8, -44.2);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#18181b';
+      ctx.fillRect(2.5, -44.8, 6.2, 1.8);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(4, -42.6, 3.6, 1.2);
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(5, -48.5, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.arc(0.5, -49.5, 9.2, Math.PI * 0.95, Math.PI * 2.04);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#111111';
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(-8.8, -53.2, 18.6, 3.8, 1.8);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 3) Павел Дуров (200..299)
+    function drawDurov() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
+      const stepSwing = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 6;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 16, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#11141c';
+      ctx.lineWidth = 4.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-3.2, -24);
+      ctx.lineTo(-4 + stepSwing, -3.5);
+      ctx.moveTo(3.2, -24);
+      ctx.lineTo(4 - stepSwing, -3.5);
+      ctx.stroke();
+
+      ctx.fillStyle = '#090b10';
+      ctx.beginPath();
+      ctx.roundRect(-6.5 + stepSwing, -4.5, 8.5, 4, 2);
+      ctx.roundRect(1.5 - stepSwing, -4.5, 8.5, 4, 2);
+      ctx.fill();
+
+      const shirtGrad = ctx.createLinearGradient(-10, -45, 10, -22);
+      shirtGrad.addColorStop(0, '#1e2330');
+      shirtGrad.addColorStop(0.55, '#11141c');
+      shirtGrad.addColorStop(1, '#080a0f');
+      ctx.fillStyle = shirtGrad;
+      ctx.strokeStyle = '#2a3140';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.moveTo(-10.5, -45);
+      ctx.lineTo(10.5, -45);
+      ctx.lineTo(7, -23);
+      ctx.lineTo(-7, -23);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#161a24';
+      ctx.beginPath();
+      ctx.roundRect(4.5, -45, 6.5, 7.5, 3);
+      ctx.fill();
+
+      ctx.strokeStyle = '#eab892';
+      ctx.lineWidth = 4;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      if (isGreeting) {
+        const waveAngle = -2.28 + Math.sin(streetCompanion.happyPhase) * 0.36;
+        const elbowX = 8.5 + Math.cos(waveAngle + 0.35) * 8;
+        const elbowY = -39 + Math.sin(waveAngle + 0.35) * 8;
+        const handX = elbowX + Math.cos(waveAngle - 0.15) * 9;
+        const handY = elbowY + Math.sin(waveAngle - 0.15) * 9;
+        ctx.moveTo(8, -40);
+        ctx.lineTo(elbowX, elbowY);
+        ctx.lineTo(handX, handY);
+        ctx.stroke();
+
+        ctx.fillStyle = '#eab892';
+        ctx.beginPath();
+        ctx.arc(handX, handY, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        const armSwing = stepSwing * 0.75;
+        ctx.moveTo(7.5, -40);
+        ctx.lineTo(8 - armSwing * 0.5, -31);
+        ctx.lineTo(9 - armSwing, -22.5);
+        ctx.stroke();
+
+        ctx.fillStyle = '#eab892';
+        ctx.beginPath();
+        ctx.arc(9 - armSwing, -22, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      ctx.fillStyle = '#dfa980';
+      ctx.fillRect(-3.2, -48.5, 6.4, 4.5);
+
+      ctx.fillStyle = '#eab892';
+      ctx.strokeStyle = '#c58f68';
+      ctx.lineWidth = 0.9;
+      ctx.beginPath();
+      ctx.moveTo(-6.2, -56);
+      ctx.quadraticCurveTo(-6.6, -49.5, -2.8, -47.2);
+      ctx.lineTo(3.6, -47);
+      ctx.quadraticCurveTo(7.2, -49, 6.8, -55.5);
+      ctx.quadraticCurveTo(5.2, -61.8, -0.8, -61.8);
+      ctx.quadraticCurveTo(-6.2, -61.2, -6.2, -56);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(55, 44, 38, 0.2)';
+      ctx.beginPath();
+      ctx.moveTo(-2.5, -50.2);
+      ctx.lineTo(5.8, -50.2);
+      ctx.lineTo(3.8, -47.2);
+      ctx.lineTo(-2.6, -47.4);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.strokeStyle = '#8c5a44';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(1.8, -49.5);
+      ctx.lineTo(5.6, -49.5);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#c58b63';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(5.4, -55);
+      ctx.lineTo(7, -51.6);
+      ctx.lineTo(5.2, -51.2);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1b191e';
+      ctx.beginPath();
+      ctx.moveTo(-6.8, -53.5);
+      ctx.quadraticCurveTo(-7.6, -60.5, -2.5, -63);
+      ctx.quadraticCurveTo(3.8, -64.2, 7.2, -59.8);
+      ctx.quadraticCurveTo(4.5, -58.2, 0.2, -59);
+      ctx.quadraticCurveTo(-3.6, -59.2, -4.4, -53);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#07090d';
+      ctx.strokeStyle = '#333b4d';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.roundRect(0.2, -56.8, 7.6, 3.8, 1.2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#141821';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(-4.2, -54.8);
+      ctx.lineTo(0.4, -55.2);
+      ctx.stroke();
+
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(1.8, -56.2);
+      ctx.lineTo(3.6, -53.8);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 4) Минотавр в солнцезащитных очках (300..399)
+    function drawMinotaur() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting
+        ? -Math.abs(Math.sin(streetCompanion.happyPhase * 0.6)) * 3.5
+        : -Math.abs(Math.sin(streetCompanion.movePhase)) * 2.2;
+      const stepSwing = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 6;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 20, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#6f4518';
+      ctx.lineWidth = 6.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-5, -22);
+      ctx.lineTo(-5 + stepSwing, -3);
+      ctx.moveTo(5, -22);
+      ctx.lineTo(5 - stepSwing, -3);
+      ctx.stroke();
+
+      ctx.fillStyle = '#9e2a1c';
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.roundRect(-11, -28, 22, 11, 3);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#8b5a2b';
+      ctx.strokeStyle = '#582f0e';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.moveTo(-14, -49);
+      ctx.lineTo(14, -49);
+      ctx.lineTo(10, -26);
+      ctx.lineTo(-10, -26);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#8b5a2b';
+      ctx.lineWidth = 5.8;
+      ctx.beginPath();
+      if (isGreeting) {
+        const wave = Math.sin(streetCompanion.happyPhase) * 4;
+        ctx.moveTo(11, -44);
+        ctx.lineTo(20, -55 + wave);
+      } else {
+        ctx.moveTo(11, -44);
+        ctx.lineTo(13 - stepSwing * 0.7, -25);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#7f4f24';
+      ctx.strokeStyle = '#4a2e16';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(-9, -63, 21, 15, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#c89f7c';
+      ctx.beginPath();
+      ctx.roundRect(4, -57, 10, 8, 4);
+      ctx.fill();
+
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(12, -50, 3, 0, Math.PI * 2);
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f8f9fa';
+      ctx.lineWidth = 3.2;
+      ctx.beginPath();
+      ctx.moveTo(-4, -62);
+      ctx.quadraticCurveTo(-11, -70, -4, -74);
+      ctx.moveTo(6, -62);
+      ctx.quadraticCurveTo(14, -70, 10, -74);
+      ctx.stroke();
+
+      ctx.fillStyle = '#090b10';
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.roundRect(1, -60, 11, 4.5, 1.5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 5) Бронзовый страж Гефеста (400..499)
+    function drawCyberGuard() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
+      const step = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 5.5;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 17, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 5.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-4, -22);
+      ctx.lineTo(-4 + step, -3);
+      ctx.moveTo(4, -22);
+      ctx.lineTo(4 - step, -3);
+      ctx.stroke();
+
+      ctx.fillStyle = '#e2e8f0';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.roundRect(-11, -45, 22, 24, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.roundRect(-6, -40, 13, 10, 3);
+      ctx.fill();
+
+      ctx.fillStyle = '#4cc9f0';
+      ctx.beginPath();
+      ctx.arc(0.5, -35, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 4.8;
+      ctx.beginPath();
+      if (isGreeting) {
+        ctx.moveTo(8, -40);
+        ctx.lineTo(15, -46);
+        ctx.lineTo(12, -55);
+      } else {
+        ctx.moveTo(8, -40);
+        ctx.lineTo(9 - step * 0.7, -23);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.roundRect(-8, -60, 17, 14, 6);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#06b6d4';
+      ctx.fillRect(0, -55.5, 8.5, 3.6);
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(-5, -62, 2.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // 6) Илон Маск с ракетой (500..599)
+    function drawElonMusk() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting ? 0 : Math.abs(Math.sin(streetCompanion.movePhase)) * -1.8;
+      const step = isGreeting ? 0 : Math.sin(streetCompanion.movePhase) * 6;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 16, 4.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 4.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-3.2, -23);
+      ctx.lineTo(-4 + step, -3);
+      ctx.moveTo(3.2, -23);
+      ctx.lineTo(4 - step, -3);
+      ctx.stroke();
+
+      ctx.fillStyle = '#18181b';
+      ctx.strokeStyle = '#3f3f46';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.roundRect(-9.5, -44, 19, 22, 4);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#f1c29b';
+      ctx.lineWidth = 4;
+      ctx.beginPath();
+      const handX = isGreeting ? 14 : 11;
+      const handY = isGreeting ? -47 + Math.sin(streetCompanion.happyPhase) * 2.5 : -33;
+      ctx.moveTo(8, -39);
+      ctx.lineTo(handX, handY);
+      ctx.stroke();
+
+      ctx.save();
+      ctx.translate(handX + 2, handY - 6);
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#475569';
+      ctx.lineWidth = 1.1;
+      ctx.beginPath();
+      ctx.roundRect(-2.8, -11, 5.6, 17, 2.5);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.moveTo(-2.8, -11);
+      ctx.lineTo(0, -17);
+      ctx.lineTo(2.8, -11);
+      ctx.closePath();
+      ctx.fill();
+
+      if (isGreeting) {
+        ctx.fillStyle = '#ffbe0b';
+        ctx.beginPath();
+        ctx.arc(0, 8, 3.5 + Math.sin(streetCompanion.happyPhase * 2) * 1.2, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+
+      ctx.fillStyle = '#f1c29b';
+      ctx.beginPath();
+      ctx.arc(0, -53, 7.6, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#3b2f2f';
+      ctx.beginPath();
+      ctx.arc(-0.5, -55, 7.8, Math.PI * 0.92, Math.PI * 2.08);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(4.2, -53.5, 1.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#7c4d34';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.arc(3.5, -51.5, 3, 0.1, 1.35);
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    // 7) Золотой титан Олимпа (600..699)
+    function drawGenie() {
+      const groundY = height - groundHeight;
+      const hover = Math.sin(elapsed * 4.2) * 4.5 - 10;
+      const isGreeting = streetCompanion.greeting;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + hover);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(255, 224, 102, 0.25)';
+      ctx.beginPath();
+      ctx.ellipse(0, 10 - hover, 18, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8f9fa';
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(0, -2);
+      ctx.quadraticCurveTo(-12, -10, -10, -22);
+      ctx.lineTo(10, -22);
+      ctx.quadraticCurveTo(12, -10, 0, -2);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      const bodyGrad = ctx.createLinearGradient(-12, -48, 12, -20);
+      bodyGrad.addColorStop(0, '#ffe066');
+      bodyGrad.addColorStop(1, '#f77f00');
+      ctx.fillStyle = bodyGrad;
+      ctx.strokeStyle = '#9c4221';
+      ctx.lineWidth = 1.4;
+      ctx.beginPath();
+      ctx.moveTo(-13, -46);
+      ctx.lineTo(13, -46);
+      ctx.lineTo(9, -22);
+      ctx.lineTo(-9, -22);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.strokeStyle = '#ffbe0b';
+      ctx.lineWidth = 4.6;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      if (isGreeting) {
+        const wave = Math.sin(streetCompanion.happyPhase) * 4;
+        ctx.moveTo(10, -42);
+        ctx.lineTo(19, -51 + wave);
+      } else {
+        ctx.moveTo(10, -42);
+        ctx.lineTo(14, -31);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffd166';
+      ctx.beginPath();
+      ctx.arc(0, -54, 8, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#d97706';
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.ellipse(0, -61, 10, 6.2, -0.08, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(3, -62, 2.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    // 8) Царь Олимпа — Горилла в золотом венце и тоге (700+)
+    function drawGorillaKing() {
+      const groundY = height - groundHeight;
+      const isGreeting = streetCompanion.greeting;
+      const bob = isGreeting
+        ? -Math.abs(Math.sin(streetCompanion.happyPhase * 0.7)) * 4
+        : -Math.abs(Math.sin(streetCompanion.movePhase * 0.8)) * 2.5;
+      const step = isGreeting ? 0 : Math.sin(streetCompanion.movePhase * 0.8) * 5;
+
+      ctx.save();
+      ctx.translate(streetCompanion.x, groundY + bob);
+      ctx.scale(streetCompanion.dir, 1);
+
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(0, 2 - bob, 22, 5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#18181b';
+      ctx.lineWidth = 7.5;
+      ctx.lineCap = 'round';
+      ctx.beginPath();
+      ctx.moveTo(-6, -24);
+      ctx.lineTo(-6 + step, -4);
+      ctx.moveTo(6, -24);
+      ctx.lineTo(6 - step, -4);
+      ctx.stroke();
+
+      ctx.fillStyle = '#1f2430';
+      ctx.strokeStyle = '#ffd166';
+      ctx.lineWidth = 1.6;
+      ctx.beginPath();
+      ctx.roundRect(-16, -54, 32, 32, 9);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(-5, -53);
+      ctx.lineTo(5, -53);
+      ctx.lineTo(1, -37);
+      ctx.closePath();
+      ctx.fill();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(1, -50, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#27272a';
+      ctx.lineWidth = 7;
+      ctx.beginPath();
+      if (isGreeting) {
+        const clap = Math.sin(streetCompanion.happyPhase * 1.3) * 4;
+        ctx.moveTo(13, -46);
+        ctx.lineTo(22, -56 + clap);
+      } else {
+        ctx.moveTo(13, -46);
+        ctx.lineTo(15 - step * 0.6, -26);
+      }
+      ctx.stroke();
+
+      ctx.fillStyle = '#27272a';
+      ctx.beginPath();
+      ctx.arc(1, -63, 10.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#a18072';
+      ctx.beginPath();
+      ctx.ellipse(3, -61, 7.2, 6.2, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#111827';
+      ctx.beginPath();
+      ctx.arc(5, -63.5, 1.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ffd166';
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.moveTo(-6, -72);
+      ctx.lineTo(-4, -79);
+      ctx.lineTo(0, -74);
+      ctx.lineTo(3, -80);
+      ctx.lineTo(7, -72);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.restore();
+    }
+
+    function drawStreetCompanion() {
+      switch (streetCompanion.role) {
+        case 'gorilla_king':
+          drawGorillaKing();
+          break;
+        case 'genie':
+          drawGenie();
+          break;
+        case 'musk':
+          drawElonMusk();
+          break;
+        case 'cyber_guard':
+          drawCyberGuard();
+          break;
+        case 'minotaur':
+          drawMinotaur();
+          break;
+        case 'durov':
+          drawDurov();
+          break;
+        case 'sheikh':
+          drawSheikh();
+          break;
+        default:
+          drawWhippetDog();
+          break;
+      }
+    }
+
+    function drawObstacles() {
+      for (const obs of obstacles) {
+        if (obs.kind === 'pegasus') {
+          // Летящий белоснежный Пегас с золотой гривой и большими крыльями
+          ctx.save();
+          ctx.translate(obs.x, obs.y);
+          const wingFlap = Math.sin(elapsed * 13 + obs.phase) * 14;
+          const legTuck = Math.sin(elapsed * 9 + obs.phase) * 4;
+
+          ctx.strokeStyle = '#ffd166';
+          ctx.lineWidth = 5;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(26, -2);
+          ctx.quadraticCurveTo(44, -8 + legTuck, 52, 4 - legTuck);
+          ctx.stroke();
+
+          ctx.fillStyle = '#e2e8f0';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(4, -8);
+          ctx.quadraticCurveTo(18, -32 - wingFlap * 0.8, 34, -18 - wingFlap * 0.5);
+          ctx.quadraticCurveTo(22, -8, 12, -6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = '#e2e8f0';
+          ctx.lineWidth = 4.2;
+          ctx.beginPath();
+          ctx.moveTo(20, 7);
+          ctx.lineTo(36, 13 + legTuck * 0.5);
+          ctx.moveTo(-16, 7);
+          ctx.lineTo(-32, 12 - legTuck * 0.5);
+          ctx.stroke();
+
+          const bodyGrad = ctx.createLinearGradient(0, -14, 0, 14);
+          bodyGrad.addColorStop(0, '#ffffff');
+          bodyGrad.addColorStop(1, '#e2e8f0');
+          ctx.fillStyle = bodyGrad;
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.ellipse(3, 1, 26, 12, -0.05, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(-14, -4);
+          ctx.quadraticCurveTo(-24, -18, -28, -24);
+          ctx.lineTo(-42, -16);
+          ctx.quadraticCurveTo(-44, -11, -38, -9);
+          ctx.lineTo(-26, -12);
+          ctx.quadraticCurveTo(-18, -2, -10, 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = '#ffd166';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(-25, -23);
+          ctx.quadraticCurveTo(-14, -19, -10, -8);
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath();
+          ctx.moveTo(-27, -23);
+          ctx.lineTo(-24, -30);
+          ctx.lineTo(-21, -22);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(-32, -17, 2, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#d4a338';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(-4, -5);
+          ctx.quadraticCurveTo(10, -36 - wingFlap, 32, -22 - wingFlap * 0.7);
+          ctx.quadraticCurveTo(22, -8, 12, -2);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.3;
+          ctx.beginPath();
+          ctx.moveTo(4, -8);
+          ctx.lineTo(18, -22 - wingFlap * 0.6);
+          ctx.moveTo(8, -6);
+          ctx.lineTo(24, -16 - wingFlap * 0.5);
+          ctx.stroke();
+
+          ctx.restore();
+        } else if (obs.kind === 'promo_cloud') {
+          // Крупное грозовое облако с надписью @JollyChimpGem и разрядом молнии
+          const cx = obs.x + obs.w * 0.5;
+          const cloudY = obs.y + 23;
+          const flash = Math.sin(obs.boltPhase * 2.3) > 0.3;
+
+          const boltTop = cloudY + 15;
+          const boltBot = Math.max(boltTop + 16, obs.y + obs.h - 4);
+          const midY = (boltTop + boltBot) * 0.52;
+
+          if (flash) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 224, 102, 0.28)';
+            ctx.beginPath();
+            ctx.arc(cx, midY, 28, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          // Молния под облаком
+          ctx.fillStyle = flash ? '#fff3b0' : '#ffd166';
+          ctx.strokeStyle = '#b56500';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(cx + 6, boltTop);
+          ctx.lineTo(cx - 8, midY + 1);
+          ctx.lineTo(cx + 1, midY + 2);
+          ctx.lineTo(cx - 7, boltBot);
+          ctx.lineTo(cx + 9, midY - 2);
+          ctx.lineTo(cx + 1, midY - 3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Широкая тёмно-синяя грозовая туча
+          ctx.fillStyle = '#2d3748';
+          ctx.strokeStyle = '#ffd166';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx - 42, cloudY + 2, 17, 0, Math.PI * 2);
+          ctx.arc(cx - 20, cloudY - 5, 21, 0, Math.PI * 2);
+          ctx.arc(cx + 6, cloudY - 7, 23, 0, Math.PI * 2);
+          ctx.arc(cx + 32, cloudY - 3, 19, 0, Math.PI * 2);
+          ctx.arc(cx + 48, cloudY + 3, 15, 0, Math.PI * 2);
+          ctx.roundRect(cx - 56, cloudY - 4, 112, 22, 11);
+          ctx.fill();
+          ctx.stroke();
+
+          // Подложка и текст @JollyChimpGem прямо на туче
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.72)';
+          ctx.beginPath();
+          ctx.roundRect(cx - 52, cloudY - 6, 104, 20, 8);
+          ctx.fill();
+
+          ctx.font = '800 11.5px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.fillStyle = '#090d16';
+          ctx.fillText('@JollyChimpGem', cx + 1, cloudY + 5);
+          ctx.fillStyle = '#ffd166';
+          ctx.fillText('@JollyChimpGem', cx, cloudY + 4);
+        } else if (obs.kind === 'storm_cloud') {
+          const cx = obs.x + obs.w * 0.5;
+          const cloudY = obs.y + 20;
+          const flash = Math.sin(obs.boltPhase * 2.3) > 0.35;
+
+          const boltTop = cloudY + 12;
+          const boltBot = Math.max(boltTop + 14, obs.y + obs.h - 4);
+          const midY = (boltTop + boltBot) * 0.52;
+
+          if (flash) {
+            ctx.save();
+            ctx.fillStyle = 'rgba(255, 224, 102, 0.25)';
+            ctx.beginPath();
+            ctx.arc(cx, midY, 26, 0, Math.PI * 2);
+            ctx.fill();
+            ctx.restore();
+          }
+
+          ctx.fillStyle = flash ? '#fff3b0' : '#ffd166';
+          ctx.strokeStyle = '#b56500';
+          ctx.lineWidth = 1.6;
+          ctx.beginPath();
+          ctx.moveTo(cx + 6, boltTop);
+          ctx.lineTo(cx - 8, midY + 1);
+          ctx.lineTo(cx + 1, midY + 2);
+          ctx.lineTo(cx - 7, boltBot);
+          ctx.lineTo(cx + 9, midY - 2);
+          ctx.lineTo(cx + 1, midY - 3);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#3b465e';
+          ctx.strokeStyle = '#1e2533';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx - 20, cloudY, 16, 0, Math.PI * 2);
+          ctx.arc(cx, cloudY - 5, 20, 0, Math.PI * 2);
+          ctx.arc(cx + 20, cloudY, 16, 0, Math.PI * 2);
+          ctx.roundRect(cx - 31, cloudY - 4, 62, 19, 9);
+          ctx.fill();
+          ctx.stroke();
+        } else if (obs.kind === 'marble_column') {
+          const cx = obs.x + obs.w * 0.5;
+          const bottomY = obs.y + obs.h;
+          const topY = obs.y + 18;
+          const shaftW = obs.w * 0.54;
+
+          ctx.fillStyle = '#dee2e6';
+          ctx.strokeStyle = '#495057';
+          ctx.lineWidth = 2;
+          ctx.fillRect(cx - obs.w * 0.44, bottomY - 12, obs.w * 0.88, 12);
+          ctx.strokeRect(cx - obs.w * 0.44, bottomY - 12, obs.w * 0.88, 12);
+          ctx.fillRect(cx - obs.w * 0.36, bottomY - 20, obs.w * 0.72, 8);
+          ctx.strokeRect(cx - obs.w * 0.36, bottomY - 20, obs.w * 0.72, 8);
+
+          const colGrad = ctx.createLinearGradient(cx - shaftW * 0.5, 0, cx + shaftW * 0.5, 0);
+          colGrad.addColorStop(0, '#f8f9fa');
+          colGrad.addColorStop(0.6, '#e9ecef');
+          colGrad.addColorStop(1, '#adb5bd');
+          ctx.fillStyle = colGrad;
+          ctx.fillRect(cx - shaftW * 0.5, topY, shaftW, obs.h - 20 - 18);
+          ctx.strokeRect(cx - shaftW * 0.5, topY, shaftW, obs.h - 20 - 18);
+
+          ctx.strokeStyle = '#868e96';
+          ctx.lineWidth = 1.4;
+          for (let f = -1; f <= 1; f++) {
+            const fx = cx + f * (shaftW * 0.26);
+            ctx.beginPath();
+            ctx.moveTo(fx, topY + 4);
+            ctx.lineTo(fx, bottomY - 24);
+            ctx.stroke();
+          }
+
+          ctx.fillStyle = '#f8f9fa';
+          ctx.strokeStyle = '#495057';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.roundRect(cx - obs.w * 0.44, topY - 14, obs.w * 0.88, 14, 4);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#ffd166';
+          ctx.beginPath();
+          ctx.arc(cx - obs.w * 0.32, topY - 7, 4.5, 0, Math.PI * 2);
+          ctx.arc(cx + obs.w * 0.32, topY - 7, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else if (obs.kind === 'olive_tree') {
+          const px = obs.x + obs.w * 0.5;
+          const bottomY = obs.y + obs.h;
+          const crownY = obs.y + 28;
+          const sway = Math.sin(obs.swayPhase) * 4;
+          const topX = px + sway * 0.4;
+
+          ctx.strokeStyle = '#5c3d2e';
+          ctx.lineWidth = 13;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(px, bottomY - 2);
+          ctx.quadraticCurveTo(px - 8, (bottomY + crownY) * 0.55, topX, crownY + 8);
+          ctx.stroke();
+
+          ctx.fillStyle = '#52796f';
+          ctx.strokeStyle = '#2f3e46';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.arc(topX - 18, crownY + 4, 17, 0, Math.PI * 2);
+          ctx.arc(topX + 18, crownY + 4, 17, 0, Math.PI * 2);
+          ctx.arc(topX, crownY - 8, 22, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.fillStyle = '#a3b18a';
+          ctx.beginPath();
+          ctx.arc(topX - 4, crownY - 12, 13, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#e9c46a';
+          ctx.beginPath();
+          ctx.arc(topX - 10, crownY + 6, 3.2, 0, Math.PI * 2);
+          ctx.arc(topX + 9, crownY + 8, 3.2, 0, Math.PI * 2);
+          ctx.arc(topX + 2, crownY - 2, 3.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (obs.kind === 'shield') {
+          ctx.save();
+          ctx.translate(obs.x, obs.y);
+          const wingY = Math.sin(obs.phase * 2.5) * 9;
+
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#94a3b8';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(-12, -2);
+          ctx.quadraticCurveTo(-28, -16 - wingY, -34, -4 - wingY * 0.4);
+          ctx.quadraticCurveTo(-24, 4, -12, 4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.beginPath();
+          ctx.moveTo(12, -2);
+          ctx.quadraticCurveTo(28, -16 - wingY, 34, -4 - wingY * 0.4);
+          ctx.quadraticCurveTo(24, 4, 12, 4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          const shieldGrad = ctx.createRadialGradient(-4, -4, 3, 0, 0, 18);
+          shieldGrad.addColorStop(0, '#fff3b0');
+          shieldGrad.addColorStop(0.6, '#ffd166');
+          shieldGrad.addColorStop(1, '#d97706');
+          ctx.fillStyle = shieldGrad;
+          ctx.strokeStyle = '#78350f';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(0, 0, 17, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.strokeStyle = '#b45309';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(0, 0, 11, 0, Math.PI * 2);
+          ctx.stroke();
+
+          ctx.fillStyle = '#fff3b0';
+          ctx.beginPath();
+          ctx.arc(0, 0, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        } else if (obs.kind === 'chariot') {
+          // Золотая античная колесница с обезьянкой-Гелиосом в солнечной короне
+          ctx.save();
+          ctx.translate(obs.x, obs.y);
+          ctx.scale(2.05, 2.05);
+
+          // Солнечное сияние позади Гелиоса
+          const sunHalo = ctx.createRadialGradient(-10, -14, 2, -10, -14, 16);
+          sunHalo.addColorStop(0, 'rgba(255, 243, 176, 0.75)');
+          sunHalo.addColorStop(1, 'rgba(255, 209, 102, 0)');
+          ctx.fillStyle = sunHalo;
+          ctx.beginPath();
+          ctx.arc(-10, -14, 16, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Развевающийся алый плащ обезьянки-Гелиоса
+          ctx.fillStyle = '#dc2626';
+          ctx.strokeStyle = '#7f1d1d';
+          ctx.lineWidth = 1.1;
+          ctx.beginPath();
+          ctx.moveTo(-10, -10);
+          ctx.quadraticCurveTo(3, -13 + Math.sin(elapsed * 14) * 2, 11, -7);
+          ctx.quadraticCurveTo(2, -4, -9, -5);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Туловище обезьянки-Гелиоса в хитоне (стоит в колеснице)
+          ctx.fillStyle = '#f8fafc';
+          ctx.strokeStyle = '#b45309';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.roundRect(-14, -12, 8, 9, 2.5);
+          ctx.fill();
+          ctx.stroke();
+
+          // Вытянутая вперёд рука обезьянки, держащая золотые вожжи
+          ctx.strokeStyle = '#8b4513';
+          ctx.lineWidth = 2.4;
+          ctx.lineCap = 'round';
+          ctx.beginPath();
+          ctx.moveTo(-12, -9);
+          ctx.lineTo(-19, -8);
+          ctx.stroke();
+
+          // Голова обезьянки-Гелиоса
+          ctx.fillStyle = '#8b4513';
+          ctx.beginPath();
+          ctx.arc(-10, -15.5, 4.8, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Светлая мордочка и глаз
+          ctx.fillStyle = '#f3d5b5';
+          ctx.beginPath();
+          ctx.ellipse(-11.2, -14.8, 3.2, 2.6, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#111827';
+          ctx.beginPath();
+          ctx.arc(-12.2, -15.8, 0.9, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Золотой солнечный венец с лучами на голове Гелиоса
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 1.3;
+          for (let r = 0; r < 5; r++) {
+            const rayAng = -Math.PI * 0.9 + r * (Math.PI * 0.22);
+            ctx.beginPath();
+            ctx.moveTo(-10 + Math.cos(rayAng) * 4.5, -16 + Math.sin(rayAng) * 4.5);
+            ctx.lineTo(-10 + Math.cos(rayAng) * 8.2, -16 + Math.sin(rayAng) * 8.2);
+            ctx.stroke();
+          }
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(-14.5, -18.2, 9, 1.8);
+
+          // Золотые вожжи вперёд к крылатому упряжному щитку
+          ctx.strokeStyle = '#fde047';
+          ctx.lineWidth = 1.2;
+          ctx.beginPath();
+          ctx.moveTo(-19, -8);
+          ctx.quadraticCurveTo(-24, -6, -28, -9);
+          ctx.stroke();
+
+          // Корпус золотой античной колесницы
+          const chariotGrad = ctx.createLinearGradient(-22, -8, 6, 8);
+          chariotGrad.addColorStop(0, '#fff3b0');
+          chariotGrad.addColorStop(0.5, '#ffd166');
+          chariotGrad.addColorStop(1, '#d97706');
+          ctx.fillStyle = chariotGrad;
+          ctx.strokeStyle = '#78350f';
+          ctx.lineWidth = 1.8;
+          ctx.beginPath();
+          ctx.moveTo(-22, 6);
+          ctx.lineTo(-22, -8);
+          ctx.quadraticCurveTo(-4, -8, 6, 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Пурпурно-красный царский фриз на борту колесницы
+          ctx.fillStyle = '#b91c1c';
+          ctx.fillRect(-20, -1.5, 21, 3.8);
+
+          // Вращающееся колесо со спицами
+          const wheelRot = elapsed * 11;
+          ctx.save();
+          ctx.translate(-10, 8);
+          ctx.rotate(wheelRot);
+          ctx.strokeStyle = '#d97706';
+          ctx.lineWidth = 2.2;
+          ctx.beginPath();
+          ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+          ctx.moveTo(-7.5, 0);
+          ctx.lineTo(7.5, 0);
+          ctx.moveTo(0, -7.5);
+          ctx.lineTo(0, 7.5);
+          ctx.stroke();
+          ctx.restore();
+
+          // Крыло колесницы
+          const wingY = Math.sin(elapsed * 18) * 6;
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#64748b';
+          ctx.lineWidth = 1.4;
+          ctx.beginPath();
+          ctx.moveTo(-3, -4);
+          ctx.lineTo(-16, -14 - wingY);
+          ctx.lineTo(9, -4);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          ctx.restore();
+        } else if (obs.kind === 'eagle') {
+          ctx.save();
+          ctx.translate(obs.x, obs.y);
+          const wingY = Math.sin(elapsed * 16) * 10;
+
+          ctx.fillStyle = '#d97706';
+          ctx.beginPath();
+          ctx.ellipse(0, 0, 17, 9.5, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = '#b45309';
+          ctx.beginPath();
+          ctx.moveTo(-4, -3);
+          ctx.lineTo(-15, -15 - wingY * 0.45);
+          ctx.lineTo(9, -2);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.beginPath();
+          ctx.moveTo(-4, 3);
+          ctx.lineTo(-15, 15 + wingY * 0.45);
+          ctx.lineTo(9, 2);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#fff3b0';
+          ctx.beginPath();
+          ctx.moveTo(15, -3);
+          ctx.lineTo(25, 1);
+          ctx.lineTo(15, 5);
+          ctx.closePath();
+          ctx.fill();
+
+          ctx.fillStyle = '#111';
+          ctx.beginPath();
+          ctx.arc(8, -2, 2.4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.restore();
+        }
+      }
+    }
+
+    function drawBananas() {
+      for (const b of bananas) {
+        const drawY = b.y + Math.sin(b.bobPhase) * 5;
+        ctx.save();
+        ctx.translate(b.x, drawY);
+        ctx.rotate(-0.25);
+
+        ctx.fillStyle = 'rgba(255, 224, 102, 0.3)';
+        ctx.beginPath();
+        ctx.arc(0, 0, b.r + 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = '#ffd60a';
+        ctx.strokeStyle = '#7f5500';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.arc(-4, 0, 13, -0.85, 0.85);
+        ctx.arc(2, 0, 10, 0.85, -0.85, true);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    function drawFallbackZeusMonkey() {
+      ctx.fillStyle = '#f8fafc';
+      ctx.strokeStyle = '#94a3b8';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(-16, 22, 13, 0, Math.PI * 2);
+      ctx.arc(0, 20, 16, 0, Math.PI * 2);
+      ctx.arc(16, 22, 13, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#93c5fd';
+      ctx.strokeStyle = '#1e3a8a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(-14, -2);
+      ctx.lineTo(14, -2);
+      ctx.lineTo(18, 18);
+      ctx.lineTo(-18, 18);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+
+      ctx.fillStyle = '#8b4513';
+      ctx.beginPath();
+      ctx.arc(0, -14, 16, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f3d5b5';
+      ctx.beginPath();
+      ctx.ellipse(0, -11, 11, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.arc(0, -19, 16, Math.PI, 0);
+      ctx.fill();
+
+      ctx.fillStyle = '#fbbf24';
+      ctx.beginPath();
+      ctx.ellipse(-11, -21, 5, 2.5, -0.4, 0, Math.PI * 2);
+      ctx.ellipse(11, -21, 5, 2.5, 0.4, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#111';
+      ctx.beginPath();
+      ctx.arc(-5, -14, 2.3, 0, Math.PI * 2);
+      ctx.arc(5, -14, 2.3, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#fde047';
+      ctx.strokeStyle = '#ca8a04';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(-22, -16);
+      ctx.lineTo(-27, -2);
+      ctx.lineTo(-21, -2);
+      ctx.lineTo(-25, 11);
+      ctx.lineTo(-15, -4);
+      ctx.lineTo(-20, -4);
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+    }
+
+    function drawMonkey() {
+      ctx.save();
+      ctx.translate(player.x, player.y);
+      ctx.rotate(player.angle);
+
+      const thrusting = state === 'playing' && holding && player.energy > 0;
+
+      if (thrusting) {
+        const pulse = 38 + Math.sin(player.auraPhase * 2) * 4;
+        const aura = ctx.createRadialGradient(0, 4, 8, 0, 4, pulse);
+        aura.addColorStop(0, 'rgba(255, 243, 176, 0.42)');
+        aura.addColorStop(0.6, 'rgba(76, 201, 240, 0.22)');
+        aura.addColorStop(1, 'rgba(76, 201, 240, 0)');
+        ctx.fillStyle = aura;
+        ctx.beginPath();
+        ctx.arc(0, 4, pulse, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (player.cymbalTimer > 0) {
+        ctx.strokeStyle = 'rgba(255, 224, 102, 0.8)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(0, 4, 44 + (0.35 - player.cymbalTimer) * 45, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      if (spriteLoaded && monkeySprite) {
+        const w = monkeySprite.naturalWidth || monkeySprite.width || 1;
+        const h = monkeySprite.naturalHeight || monkeySprite.height || 1;
+        const targetH = 92;
+        const scale = targetH / h;
+        const drawW = w * scale;
+        const drawH = h * scale;
+
+        ctx.drawImage(monkeySprite, -drawW * 0.5, -drawH * 0.5, drawW, drawH);
+      } else {
+        drawFallbackZeusMonkey();
+      }
+
+      if (thrusting) {
+        ctx.strokeStyle = '#fff3b0';
+        ctx.lineWidth = 2;
+        for (let s = 0; s < 2; s++) {
+          const sx = (s === 0 ? -18 : 18) + Math.sin(player.auraPhase * 3 + s) * 4;
+          const sy = 22;
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx - 4, sy + 8);
+          ctx.lineTo(sx + 2, sy + 10);
+          ctx.lineTo(sx - 3, sy + 18);
+          ctx.stroke();
+        }
+      }
+
+      ctx.restore();
+    }
+
+    function drawEffects() {
+      for (const p of particles) {
+        const alpha = Math.max(0, p.life / p.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = p.color;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.restore();
+      }
+
+      for (const ft of floatingTexts) {
+        const alpha = Math.max(0, ft.life / ft.maxLife);
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        ctx.font = '800 15px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillStyle = '#111827';
+        ctx.fillText(ft.text, ft.x + 1.5, ft.y + 1.5);
+        ctx.fillStyle = ft.color;
+        ctx.fillText(ft.text, ft.x, ft.y);
+        ctx.restore();
+      }
+
+      if (hitFlash > 0) {
+        ctx.fillStyle = `rgba(239, 68, 68, ${hitFlash * 0.55})`;
+        ctx.fillRect(0, 0, width, height);
+      }
+    }
+
+    function render() {
+      ctx.save();
+      if (screenShake > 0) {
+        const sx = (Math.random() - 0.5) * screenShake;
+        const sy = (Math.random() - 0.5) * screenShake;
+        ctx.translate(sx, sy);
+      }
+
+      drawBackground();
+      drawStreetCompanion();
+      drawBananas();
+      drawObstacles();
+      drawMonkey();
+      drawEffects();
+
+      ctx.restore();
+    }
+
+    let lastTime = performance.now();
+    function loop(now) {
+      const dt = Math.min(0.05, (now - lastTime) / 1000);
+      lastTime = now;
+      update(dt);
+      render();
+      requestAnimationFrame(loop);
+    }
+
+    resize();
+    resetGame();
+    requestAnimationFrame(loop);
+  </script>
+</body>
+</html>
